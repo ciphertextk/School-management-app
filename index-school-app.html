@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dorisben Academy — Class Records</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#1a1f2b;
+    --muted:#6b7280;
+    --line:#e6e8ec;
+    --bg:#f6f7f9;
+    --panel:#ffffff;
+    --brand:#1f4ea3;
+    --brand-soft:#eef3fb;
+    --ok:#10806a;
+    --warn:#b4540a;
+    --danger:#b42318;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.06);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);
+    background:var(--bg);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.45;
+  }
+  a{color:var(--brand)}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  .topbar{
+    background:var(--panel);
+    border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:20;
+  }
+  .topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:62px}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:16px;letter-spacing:-.01em}
+  .brand .mark{
+    width:32px;height:32px;border-radius:8px;background:var(--brand);
+    color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px;
+  }
+  .brand small{display:block;font-weight:500;color:var(--muted);font-size:11px;letter-spacing:.02em}
+  .role-pill{
+    font-size:12px;font-weight:600;color:var(--brand);
+    background:var(--brand-soft);padding:5px 11px;border-radius:999px;
+  }
+  .btn{
+    font:inherit;font-weight:600;font-size:13px;cursor:pointer;
+    border:1px solid var(--line);background:var(--panel);color:var(--ink);
+    padding:8px 14px;border-radius:8px;transition:.12s;
+  }
+  .btn:hover{border-color:#cfd4dc}
+  .btn-primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn-primary:hover{background:#1a428c;border-color:#1a428c}
+  .btn-ghost{background:transparent;border-color:transparent;color:var(--muted)}
+  .btn-ghost:hover{color:var(--ink);background:#f0f1f3}
+  .btn-danger{color:var(--danger);border-color:transparent;background:transparent}
+  .btn-danger:hover{background:#fef3f2}
+  .btn-sm{padding:5px 10px;font-size:12px}
+  input,select,textarea{
+    font:inherit;color:var(--ink);background:#fff;
+    border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%;
+  }
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+  label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px}
+
+  /* login */
+  .login-screen{min-height:100vh;display:grid;place-items:center;padding:24px}
+  .login-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    box-shadow:var(--shadow);width:100%;max-width:380px;padding:32px;
+  }
+  .login-head{text-align:center;margin-bottom:24px}
+  .login-head .mark{
+    width:48px;height:48px;border-radius:12px;background:var(--brand);color:#fff;
+    display:grid;place-items:center;font-weight:800;font-size:20px;margin:0 auto 14px;
+  }
+  .login-head h1{font-size:19px;margin:0 0 2px;letter-spacing:-.01em}
+  .login-head p{color:var(--muted);font-size:13px;margin:0}
+  .role-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+  .role-toggle button{
+    padding:10px;border:1px solid var(--line);background:#fff;border-radius:8px;
+    font-weight:600;font-size:13px;cursor:pointer;color:var(--muted);
+  }
+  .role-toggle button.active{border-color:var(--brand);background:var(--brand-soft);color:var(--brand)}
+  .field{margin-bottom:14px}
+  .err{color:var(--danger);font-size:12.5px;margin:2px 0 12px;font-weight:500}
+
+  /* page */
+  .page{padding:28px 0 80px}
+  .page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:14px}
+  .page-head h2{font-size:22px;margin:0 0 3px;letter-spacing:-.02em}
+  .page-head p{color:var(--muted);font-size:13.5px;margin:0}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .filter{min-width:150px}
+
+  /* student grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;
+  }
+  .card-head{display:flex;gap:13px;padding:16px 16px 13px;align-items:center}
+  .avatar{
+    width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;
+    background:var(--brand-soft);display:grid;place-items:center;
+    color:var(--brand);font-weight:700;font-size:18px;border:1px solid var(--line);
+  }
+  .avatar img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+  .card-id{flex:1;min-width:0}
+  .card-id h3{margin:0;font-size:15.5px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card-id .cls{
+    display:inline-block;margin-top:3px;font-size:11.5px;font-weight:600;
+    color:var(--brand);background:var(--brand-soft);padding:2px 8px;border-radius:6px;
+  }
+  .card-body{padding:0 16px 14px;flex:1}
+  .sub-table{width:100%;border-collapse:collapse;font-size:13px}
+  .sub-table th{
+    text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;
+    color:var(--muted);font-weight:700;padding:6px 8px;border-bottom:1px solid var(--line);
+  }
+  .sub-table td{padding:7px 8px;border-bottom:1px solid #f1f2f4;vertical-align:top}
+  .sub-table tr:last-child td{border-bottom:none}
+  .sub-name{font-weight:500}
+  .grade-chip{
+    display:inline-block;min-width:24px;text-align:center;font-weight:700;font-size:12px;
+    padding:1px 7px;border-radius:6px;background:#f1f2f4;color:var(--ink);
+  }
+  .rmk{color:var(--muted);font-size:12px}
+  .empty-sub{color:var(--muted);font-size:12.5px;padding:14px 8px;text-align:center}
+  .extra{padding:10px 16px;border-top:1px solid var(--line);background:#fbfbfc}
+  .extra-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:3px 0}
+  .extra-row .k{color:var(--muted);font-weight:600}
+  .card-foot{display:flex;gap:6px;padding:11px 16px;border-top:1px solid var(--line);background:#fbfbfc}
+
+  .empty-state{
+    text-align:center;padding:70px 20px;background:var(--panel);
+    border:1px dashed var(--line);border-radius:14px;color:var(--muted);
+  }
+  .empty-state h3{color:var(--ink);margin:0 0 6px;font-size:17px}
+  .empty-state p{margin:0 0 18px;font-size:14px}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(16,24,40,.45);z-index:40;display:grid;place-items:start center;padding:34px 16px;overflow:auto}
+  .modal{background:var(--panel);border-radius:14px;width:100%;max-width:560px;box-shadow:0 20px 48px rgba(16,24,40,.2)}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line)}
+  .modal-head h3{margin:0;font-size:17px;letter-spacing:-.01em}
+  .modal-body{padding:20px 22px;max-height:64vh;overflow:auto}
+  .modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:16px 22px;border-top:1px solid var(--line)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .section-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:20px 0 10px}
+  .sub-edit{display:grid;grid-template-columns:1.4fr .7fr .7fr 1.6fr auto;gap:8px;align-items:center;margin-bottom:8px}
+  .sub-edit input{padding:7px 9px;font-size:13px}
+  .x-btn{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:4px 6px;border-radius:6px}
+  .x-btn:hover{background:#fef3f2;color:var(--danger)}
+  .add-line{display:flex;gap:8px;align-items:center;margin-top:6px}
+  .photo-pick{display:flex;align-items:center;gap:14px}
+  .photo-prev{width:64px;height:64px;border-radius:10px;object-fit:cover;border:1px solid var(--line);background:var(--brand-soft);display:grid;place-items:center;color:var(--brand);font-weight:700}
+  .photo-prev img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+  .hint{font-size:12px;color:var(--muted);margin-top:4px}
+  .stat-bar{display:flex;gap:22px;margin-bottom:22px;flex-wrap:wrap}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 18px;min-width:120px}
+  .stat .n{font-size:22px;font-weight:700;letter-spacing:-.02em}
+  .stat .l{font-size:12px;color:var(--muted);font-weight:600;margin-top:1px}
+  .loading{text-align:center;padding:60px;color:var(--muted)}
+  .config-warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:14px 18px;border-radius:10px;margin:24px auto;max-width:680px;font-size:13.5px}
+  .config-warn code{background:#fef3c7;padding:1px 5px;border-radius:4px}
+  @media(max-width:560px){
+    .sub-edit{grid-template-columns:1fr 1fr;gap:6px}
+    .row2{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useCallback } = React;
+
+/* ============================================================
+   CONFIG  — replace these four values, then the app is live.
+   ============================================================ */
+const CONFIG = {
+  SUPABASE_URL: "YOUR_SUPABASE_URL",       // e.g. https://abcd1234.supabase.co
+  SUPABASE_ANON_KEY: "YOUR_SUPABASE_ANON_KEY",
+  TEACHER_PASSWORD: "teach2026",           // give this to teachers
+  OWNER_PASSWORD: "owner2026",             // keep this for the owner
+};
+
+const DEFAULT_SUBJECTS = [
+  "English Language","Mathematics","Science","History",
+  "Religious and Moral","Ghana Lang.","Creative Arts","Computing",
+];
+
+const isConfigured =
+  CONFIG.SUPABASE_URL.startsWith("http") &&
+  CONFIG.SUPABASE_ANON_KEY.length > 20;
+
+const sb = isConfigured
+  ? supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY)
+  : null;
+
+const initials = (name) =>
+  (name || "?").trim().split(/\s+/).slice(0,2).map(w=>w[0]||"").join("").toUpperCase();
+
+/* ---------- Login ---------- */
+function Login({ onLogin }) {
+  const [role, setRole] = useState("teacher");
+  const [pw, setPw] = useState("");
+  const [err, setErr] = useState("");
+
+  const submit = () => {
+    const target = role === "teacher" ? CONFIG.TEACHER_PASSWORD : CONFIG.OWNER_PASSWORD;
+    if (pw === target) { onLogin(role); }
+    else setErr("That password doesn't match. Check with the school admin.");
+  };
+
+  return (
+    <div className="login-screen">
+      <div className="login-card">
+        <div className="login-head">
+          <div className="mark">DA</div>
+          <h1>Dorisben Academy</h1>
+          <p>New Krobo · Techiman · Class Records</p>
+        </div>
+        <div className="role-toggle">
+          <button className={role==="teacher"?"active":""} onClick={()=>{setRole("teacher");setErr("")}}>Teacher</button>
+          <button className={role==="owner"?"active":""} onClick={()=>{setRole("owner");setErr("")}}>Owner</button>
+        </div>
+        <div className="field">
+          <label>{role==="teacher"?"Teacher password":"Owner password"}</label>
+          <input
+            type="password" value={pw} autoFocus
+            onChange={e=>{setPw(e.target.value);setErr("")}}
+            onKeyDown={e=>e.key==="Enter"&&submit()}
+            placeholder="Enter password"
+          />
+        </div>
+        {err && <div className="err">{err}</div>}
+        <button className="btn btn-primary" style={{width:"100%"}} onClick={submit}>
+          {role==="teacher"?"Open teacher view":"Open owner dashboard"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Student editor modal ---------- */
+function StudentModal({ student, onClose, onSaved }) {
+  const editing = !!student;
+  const [name, setName] = useState(student?.name || "");
+  const [cls, setCls]   = useState(student?.class_name || "");
+  const [subjects, setSubjects] = useState(
+    student?.subjects?.length ? student.subjects
+      : DEFAULT_SUBJECTS.map(s=>({subject:s,marks:"",grade:"",remarks:""}))
+  );
+  const [fields, setFields] = useState(student?.extra_fields || []);
+  const [photoUrl, setPhotoUrl] = useState(student?.photo_url || "");
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+
+  const setSub = (i,k,v) => setSubjects(s=>s.map((r,idx)=>idx===i?{...r,[k]:v}:r));
+  const addSub = () => setSubjects(s=>[...s,{subject:"",marks:"",grade:"",remarks:""}]);
+  const delSub = (i) => setSubjects(s=>s.filter((_,idx)=>idx!==i));
+
+  const setField = (i,k,v) => setFields(f=>f.map((r,idx)=>idx===i?{...r,[k]:v}:r));
+  const addField = () => setFields(f=>[...f,{label:"",value:""}]);
+  const delField = (i) => setFields(f=>f.filter((_,idx)=>idx!==i));
+
+  const pickPhoto = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true); setErr("");
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `students/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+      const { error } = await sb.storage.from("student-photos").upload(path, file, { upsert:true });
+      if (error) throw error;
+      const { data } = sb.storage.from("student-photos").getPublicUrl(path);
+      setPhotoUrl(data.publicUrl);
+    } catch (e2) {
+      setErr("Photo upload failed: " + e2.message);
+    } finally { setUploading(false); }
+  };
+
+  const save = async () => {
+    if (!name.trim()) { setErr("Student name is required."); return; }
+    setSaving(true); setErr("");
+    const payload = {
+      name: name.trim(),
+      class_name: cls.trim(),
+      subjects: subjects.filter(s=>s.subject.trim()),
+      extra_fields: fields.filter(f=>f.label.trim()),
+      photo_url: photoUrl || null,
+    };
+    try {
+      const q = editing
+        ? sb.from("students").update(payload).eq("id", student.id)
+        : sb.from("students").insert(payload);
+      const { error } = await q;
+      if (error) throw error;
+      onSaved();
+    } catch (e2) {
+      setErr("Could not save: " + e2.message);
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="modal-head">
+          <h3>{editing ? "Edit student" : "New student"}</h3>
+          <button className="x-btn" onClick={onClose}>×</button>
+        </div>
+        <div className="modal-body">
+          <div className="photo-pick" style={{marginBottom:18}}>
+            <div className="photo-prev">
+              {photoUrl ? <img src={photoUrl} alt="" /> : initials(name)}
+            </div>
+            <div>
+              <label style={{marginBottom:6}}>Student photo (optional)</label>
+              <input type="file" accept="image/*" onChange={pickPhoto} disabled={uploading} style={{fontSize:13}} />
+              {uploading && <div className="hint">Uploading…</div>}
+            </div>
+          </div>
+
+          <div className="row2">
+            <div className="field">
+              <label>Full name</label>
+              <input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Abanfo Godfred" autoFocus />
+            </div>
+            <div className="field">
+              <label>Class</label>
+              <input value={cls} onChange={e=>setCls(e.target.value)} placeholder="e.g. 1A" />
+            </div>
+          </div>
+
+          <div className="section-label">Subjects</div>
+          <div className="sub-edit" style={{marginBottom:4}}>
+            <label style={{margin:0}}>Subject</label>
+            <label style={{margin:0}}>Marks</label>
+            <label style={{margin:0}}>Grade</label>
+            <label style={{margin:0}}>Remarks</label>
+            <span></span>
+          </div>
+          {subjects.map((s,i)=>(
+            <div className="sub-edit" key={i}>
+              <input value={s.subject} onChange={e=>setSub(i,"subject",e.target.value)} placeholder="Subject" />
+              <input value={s.marks} onChange={e=>setSub(i,"marks",e.target.value)} placeholder="—" />
+              <input value={s.grade} onChange={e=>setSub(i,"grade",e.target.value)} placeholder="—" />
+              <input value={s.remarks} onChange={e=>setSub(i,"remarks",e.target.value)} placeholder="—" />
+              <button className="x-btn" onClick={()=>delSub(i)} title="Remove subject">×</button>
+            </div>
+          ))}
+          <button className="btn btn-sm" style={{marginTop:6}} onClick={addSub}>+ Add subject</button>
+
+          <div className="section-label">Extra fields (optional)</div>
+          {fields.length===0 && <div className="hint" style={{marginBottom:8}}>Add anything else: position, attendance, interest, remarks…</div>}
+          {fields.map((f,i)=>(
+            <div className="add-line" key={i}>
+              <input value={f.label} onChange={e=>setField(i,"label",e.target.value)} placeholder="Label (e.g. Attendance)" />
+              <input value={f.value} onChange={e=>setField(i,"value",e.target.value)} placeholder="Value (e.g. 38/55)" />
+              <button className="x-btn" onClick={()=>delField(i)}>×</button>
+            </div>
+          ))}
+          <button className="btn btn-sm" style={{marginTop:6}} onClick={addField}>+ Add field</button>
+
+          {err && <div className="err" style={{marginTop:16}}>{err}</div>}
+        </div>
+        <div className="modal-foot">
+          <button className="btn" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={save} disabled={saving||uploading}>
+            {saving ? "Saving…" : editing ? "Save changes" : "Add student"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Student card ---------- */
+function StudentCard({ s, readOnly, onEdit, onDelete }) {
+  return (
+    <div className="card">
+      <div className="card-head">
+        <div className="avatar">
+          {s.photo_url ? <img src={s.photo_url} alt="" /> : initials(s.name)}
+        </div>
+        <div className="card-id">
+          <h3>{s.name}</h3>
+          {s.class_name && <span className="cls">{s.class_name}</span>}
+        </div>
+      </div>
+      <div className="card-body">
+        {s.subjects?.length ? (
+          <table className="sub-table">
+            <thead><tr><th>Subject</th><th>Marks</th><th>Grade</th><th>Remarks</th></tr></thead>
+            <tbody>
+              {s.subjects.map((r,i)=>(
+                <tr key={i}>
+                  <td className="sub-name">{r.subject}</td>
+                  <td>{r.marks||"—"}</td>
+                  <td>{r.grade ? <span className="grade-chip">{r.grade}</span> : "—"}</td>
+                  <td className="rmk">{r.remarks||"—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : <div className="empty-sub">No subjects recorded yet.</div>}
+      </div>
+      {s.extra_fields?.length>0 && (
+        <div className="extra">
+          {s.extra_fields.map((f,i)=>(
+            <div className="extra-row" key={i}><span className="k">{f.label}</span><span>{f.value||"—"}</span></div>
+          ))}
+        </div>
+      )}
+      {!readOnly && (
+        <div className="card-foot">
+          <button className="btn btn-sm" onClick={()=>onEdit(s)}>Edit</button>
+          <button className="btn btn-sm btn-danger" onClick={()=>onDelete(s)}>Delete</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Main app ---------- */
+function App() {
+  const [role, setRole] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(null); // null | "new" | studentObj
+  const [filter, setFilter] = useState("__all");
+
+  const load = useCallback(async () => {
+    if (!sb) { setLoading(false); return; }
+    setLoading(true);
+    const { data, error } = await sb.from("students").select("*").order("name");
+    if (!error) setStudents(data || []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { if (role) load(); }, [role, load]);
+
+  const remove = async (s) => {
+    if (!confirm(`Delete ${s.name}? This cannot be undone.`)) return;
+    await sb.from("students").delete().eq("id", s.id);
+    load();
+  };
+
+  if (!isConfigured) {
+    return (
+      <div className="config-warn">
+        <strong>Almost ready.</strong> Open <code>index.html</code> and fill in the four values
+        at the top of the <code>CONFIG</code> block (your Supabase URL, anon key, and the two
+        passwords). The setup steps are in the README.
+      </div>
+    );
+  }
+
+  if (!role) return <Login onLogin={setRole} />;
+
+  const classes = [...new Set(students.map(s=>s.class_name).filter(Boolean))].sort();
+  const shown = filter==="__all" ? students : students.filter(s=>s.class_name===filter);
+  const readOnly = role === "owner";
+
+  return (
+    <div>
+      <div className="topbar">
+        <div className="wrap">
+          <div className="brand">
+            <div className="mark">DA</div>
+            <div>Dorisben Academy<small>Class Records · End of Term</small></div>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            <span className="role-pill">{role==="owner"?"Owner · view only":"Teacher"}</span>
+            <button className="btn btn-ghost btn-sm" onClick={()=>{setRole(null);setStudents([])}}>Sign out</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="wrap page">
+        <div className="page-head">
+          <div>
+            <h2>{readOnly ? "School overview" : "Class records"}</h2>
+            <p>{readOnly
+              ? "Live records entered by teachers, across all classes."
+              : "Add students and record their end of term subject results."}</p>
+          </div>
+          <div className="toolbar">
+            {classes.length>0 && (
+              <select className="filter" value={filter} onChange={e=>setFilter(e.target.value)}>
+                <option value="__all">All classes</option>
+                {classes.map(c=><option key={c} value={c}>{c}</option>)}
+              </select>
+            )}
+            {!readOnly && <button className="btn btn-primary" onClick={()=>setModal("new")}>+ New student</button>}
+          </div>
+        </div>
+
+        {readOnly && students.length>0 && (
+          <div className="stat-bar">
+            <div className="stat"><div className="n">{students.length}</div><div className="l">Students</div></div>
+            <div className="stat"><div className="n">{classes.length||"—"}</div><div className="l">Classes</div></div>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="loading">Loading records…</div>
+        ) : shown.length===0 ? (
+          <div className="empty-state">
+            <h3>{students.length===0 ? "No students yet" : "Nothing in this class yet"}</h3>
+            <p>{readOnly
+              ? "Records will appear here as teachers add them."
+              : "Create the first student card to get started."}</p>
+            {!readOnly && <button className="btn btn-primary" onClick={()=>setModal("new")}>+ New student</button>}
+          </div>
+        ) : (
+          <div className="grid">
+            {shown.map(s=>(
+              <StudentCard key={s.id} s={s} readOnly={readOnly}
+                onEdit={setModal} onDelete={remove} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {modal && (
+        <StudentModal
+          student={modal==="new" ? null : modal}
+          onClose={()=>setModal(null)}
+          onSaved={()=>{setModal(null);load()}}
+        />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
