@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#f3f5f9" />
+<title>Dorisben Academy · Class Records</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<style>
+  /* ============================================================
+     Design tokens. One column, one list style, one sheet style.
+     Mobile first: everything below is the phone layout; the only
+     wide-screen change is that sheets become centred dialogs.
+     ============================================================ */
+  :root{
+    --ink:#172033; --ink-2:#465166; --muted:#7b8497;
+    --line:#e2e6ee; --line-2:#edf0f5;
+    --bg:#f3f5f9; --panel:#ffffff; --sunk:#e8ecf3;
+    --brand:#1f4ea3; --brand-ink:#183f86; --brand-soft:#e8eefa;
+    --gold:#c98a1e; --gold-soft:#fbf2df;
+    --ok:#0f7a60; --ok-soft:#e1f3ec;
+    --danger:#b3311e; --danger-soft:#fbe8e5;
+    --r:16px; --r-sm:11px; --pill:999px;
+    --shadow:0 1px 2px rgba(23,32,51,.05);
+    --font:"Instrument Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;background:var(--bg)}
+  html,body{margin:0;padding:0;max-width:100%;overflow-x:clip}
+  body{font:15px/1.45 var(--font);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+  button,input,select,textarea{font:inherit;color:inherit}
+  img{max-width:100%}
+  .tnum{font-variant-numeric:tabular-nums}
+  .wrap{max-width:720px;margin:0 auto;padding:0 16px}
+  :focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+  /* ---------- Header ---------- */
+  .topbar{position:sticky;top:0;z-index:30;background:rgba(243,245,249,.88);-webkit-backdrop-filter:saturate(180%) blur(12px);backdrop-filter:saturate(180%) blur(12px);padding-top:env(safe-area-inset-top)}
+  .topbar .wrap{display:flex;align-items:center;gap:10px;height:58px}
+  .brand{display:flex;align-items:center;gap:10px;flex:1;min-width:0;font-weight:700;font-size:16px;letter-spacing:-.01em}
+  .brand-name{font-size:15px;line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .logo{width:32px;height:32px;flex:0 0 32px;display:grid;place-items:center;border-radius:9px;overflow:hidden}
+  .logo img{width:100%;height:100%;object-fit:contain}
+  .logo.mono{background:var(--brand);color:#fff;font-size:12px;font-weight:700;letter-spacing:.02em}
+  .term-chip{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 11px 0 12px;border-radius:var(--pill);border:1px solid var(--line);background:var(--panel);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex:0 0 auto}
+  .term-chip .dot{width:7px;height:7px;border-radius:50%;background:var(--gold)}
+  .term-chip.past .dot{background:var(--muted)}
+  .term-chip svg{color:var(--muted)}
+  .avatar-btn{width:34px;height:34px;flex:0 0 34px;border-radius:50%;border:none;background:var(--ink);color:#fff;font-weight:700;font-size:14px;cursor:pointer}
+  .wrap.page{padding-top:6px;padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+
+  /* ---------- Type ---------- */
+  .greet{font-size:14px;color:var(--muted);margin:10px 0 2px}
+  .h1{font-size:27px;font-weight:700;letter-spacing:-.025em;line-height:1.15;margin:0}
+  .lede{color:var(--muted);font-size:14px;margin:4px 0 0}
+  .sec{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:24px 4px 8px}
+  .sec h2{font-size:15px;font-weight:700;margin:0;letter-spacing:-.01em}
+  .sec .count{color:var(--muted);font-weight:500;margin-left:6px}
+  .muted{color:var(--muted)}
+
+  /* ---------- Grouped list: the one container used everywhere ---------- */
+  .list{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+  .row{display:flex;align-items:center;gap:12px;width:100%;min-height:62px;padding:11px 14px;background:none;border:none;text-align:left;position:relative;cursor:pointer}
+  .row.static{cursor:default}
+  .row+.row::before{content:"";position:absolute;top:0;right:0;left:66px;border-top:1px solid var(--line-2)}
+  .row.flat+.row.flat::before,.row+.row.flat::before{left:14px}
+  button.row:active,.row.tap:active{background:#f5f7fb}
+  .row-main{flex:1;min-width:0}
+  .row-title{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row-sub{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .row-end{display:flex;align-items:center;gap:8px;flex:0 0 auto;font-size:14px;color:var(--ink-2)}
+  .row.danger .row-title{color:var(--danger)}
+  .chev{color:#b4bbca;display:flex}
+  .tile{width:40px;height:40px;flex:0 0 40px;border-radius:12px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-weight:700;font-size:14px;letter-spacing:-.01em}
+  .av{width:40px;height:40px;flex:0 0 40px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:13px;display:grid;place-items:center;overflow:hidden}
+  .av img{width:100%;height:100%;object-fit:cover}
+  .av.lg{width:52px;height:52px;flex-basis:52px;font-size:16px}
+  .sdot{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+  .sdot.ok{background:var(--ok)}
+
+  /* ---------- Pills ---------- */
+  .pill{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:var(--pill);font-size:12px;font-weight:600;white-space:nowrap;background:var(--sunk);color:var(--ink-2)}
+  .pill.ok{background:var(--ok-soft);color:var(--ok)}
+  .pill.bad{background:var(--danger-soft);color:var(--danger)}
+  .pill.warn{background:var(--gold-soft);color:#8a5a0a}
+  .pill.brand{background:var(--brand-soft);color:var(--brand)}
+
+  /* ---------- Figures strip ---------- */
+  .figs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);margin-top:16px}
+  .figs.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fig{padding:13px 14px;min-width:0}
+  .fig+.fig{border-left:1px solid var(--line-2)}
+  .fig .n{font-size:22px;font-weight:700;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fig .n small{font-size:14px;color:var(--muted);font-weight:600}
+  .fig .l{font-size:12.5px;color:var(--muted);margin-top:1px}
+  .figs.money .fig .n{font-size:19px}
+  .fig .n.good{color:var(--ok)} .fig .n.bad{color:var(--danger)}
+
+  /* ---------- Segmented control ---------- */
+  .seg{display:flex;background:var(--sunk);border-radius:12px;padding:3px;gap:2px}
+  .seg button{flex:1;min-width:0;border:none;background:none;border-radius:9px;height:36px;font-size:14px;font-weight:600;color:var(--ink-2);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px}
+  .seg button.on{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(23,32,51,.12)}
+  .seg-wrap{margin:16px 0 4px}
+
+  /* ---------- Buttons ---------- */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:14.5px;font-weight:600;cursor:pointer;color:var(--ink);white-space:nowrap}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn-primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn-primary:active{background:var(--brand-ink)}
+  /* Destructive: solid red so it is easy to spot; pressed state flips to
+     white with amber text so the tap is visible before it commits. */
+  .btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
+  .btn-danger:active{background:#fff;border-color:#e6a700;color:#c48a00}
+  .btn-ghost{background:none;border-color:transparent;color:var(--ink-2)}
+  .btn-sm{height:36px;padding:0 12px;font-size:13.5px;border-radius:10px}
+  .btn-block{width:100%}
+  .link{background:none;border:none;padding:0;color:var(--brand);font-weight:600;font-size:14px;cursor:pointer}
+  .link.danger{color:var(--danger)}
+  .back{display:inline-flex;align-items:center;gap:2px;background:none;border:none;color:var(--brand);font-weight:600;font-size:14.5px;padding:8px 0;cursor:pointer;margin-left:-4px}
+  .icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;cursor:pointer;color:var(--ink-2);flex:0 0 40px}
+
+  /* ---------- Forms ---------- */
+  .field{margin-bottom:14px}
+  label.field{display:block;font-size:inherit;font-weight:inherit;color:inherit}
+  label,.label{display:block;font-size:13px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+  input,select,textarea{width:100%;font-size:16px;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-height:46px}
+  textarea{min-height:84px;resize:vertical;line-height:1.45}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+  input::placeholder,textarea::placeholder{color:#a3aab8}
+  select{appearance:none;-webkit-appearance:none;padding-right:36px;cursor:pointer;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%237b8497' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");background-repeat:no-repeat;background-position:right 14px center}
+  input[type=checkbox]{width:20px;height:20px;min-height:0;accent-color:var(--brand);margin:0}
+  .check{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;color:var(--ink);margin:4px 0 14px;cursor:pointer}
+  .hint{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5}
+  .err{color:var(--danger);font-size:13.5px;font-weight:500;margin:4px 0 12px}
+  .okmsg{color:var(--ok);font-size:13.5px;font-weight:500;margin:4px 0 12px}
+  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .search{position:relative;margin-bottom:10px}
+  .search input{padding-left:38px;background:var(--panel)}
+  .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  details.more{border-top:1px solid var(--line-2);margin-top:18px;padding-top:6px}
+  details.more summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:12px 0;font-weight:700;font-size:15px}
+  details.more summary::-webkit-details-marker{display:none}
+  details.more summary::after{content:"+";font-size:20px;color:var(--muted);font-weight:500}
+  details.more[open] summary::after{content:"\2013"}
+
+  /* ---------- Notices ---------- */
+  .notice{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--gold-soft);color:#6b4708;font-size:13.5px;line-height:1.45;margin-top:14px}
+  .notice.info{background:var(--brand-soft);color:#1d3a6e}
+  .notice.ok{background:var(--ok-soft);color:#0b5a47}
+  .notice .grow{flex:1;min-width:0}
+  .notice strong{font-weight:700}
+  .notice ul{margin:6px 0 0;padding-left:18px}
+  .empty{text-align:center;padding:40px 22px;background:var(--panel);border:1px dashed var(--line);border-radius:var(--r);color:var(--muted)}
+  .empty h3{color:var(--ink);margin:0 0 4px;font-size:16px}
+  .empty p{margin:0 0 16px;font-size:14px}
+
+  /* ---------- Class header ---------- */
+  .class-head{display:flex;align-items:flex-start;gap:12px;margin-top:2px}
+  .class-head .grow{flex:1;min-width:0}
+  .class-head .h1{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+  /* ---------- Attendance ---------- */
+  .day-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px 2px 10px}
+  .day-head .d{font-weight:700;font-size:16px}
+  .day-head input[type=date]{width:auto;min-height:38px;padding:6px 10px;font-size:14px}
+  .meter{height:8px;border-radius:8px;background:var(--sunk);overflow:hidden;display:flex;margin:4px 0 8px}
+  .meter i{display:block;height:100%}
+  .meter .p{background:var(--ok)} .meter .a{background:var(--danger)}
+  .meter-key{display:flex;gap:14px;font-size:13px;color:var(--ink-2);flex-wrap:wrap}
+  .meter-key b{font-weight:700}
+  .pa{display:flex;gap:6px}
+  .pa button{width:46px;height:40px;border-radius:11px;border:1px solid var(--line);background:var(--panel);font-weight:700;font-size:14px;color:var(--muted);cursor:pointer}
+  .pa button:disabled{opacity:.55}
+  .pa .p.on{background:var(--ok);border-color:var(--ok);color:#fff}
+  .pa .a.on{background:var(--danger);border-color:var(--danger);color:#fff}
+  .tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 2px 8px;font-size:13px;color:var(--muted)}
+  .month-h{font-size:13px;font-weight:700;color:var(--muted);margin:18px 4px 8px}
+
+  /* ---------- Student sheet ---------- */
+  .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:2px 0 6px}
+  .stats.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat{background:var(--bg);border-radius:12px;padding:10px 11px;min-width:0}
+  .stat .l{font-size:12px;color:var(--muted);font-weight:600}
+  .stat .n{font-size:19px;font-weight:700;margin-top:2px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stat .n.good{color:var(--ok)} .stat .n.bad{color:var(--danger)}
+  .block{border-top:1px solid var(--line-2);padding:16px 0 4px;margin-top:12px}
+  .block-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .block-h h4{margin:0;font-size:15px;font-weight:700}
+  .mini{width:100%;border-collapse:collapse;font-size:14px}
+  .mini th{text-align:left;font-size:12px;font-weight:600;color:var(--muted);padding:0 4px 6px}
+  .mini td{padding:8px 4px;border-top:1px solid var(--line-2)}
+  .mini .r{text-align:right}
+  .mini tr.tot td{font-weight:700}
+  .grade{display:inline-grid;place-items:center;min-width:24px;height:22px;border-radius:7px;background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:12.5px}
+  .mo-nav{display:flex;align-items:center;gap:6px}
+  .mo-nav button{background:var(--sunk);border:none;border-radius:9px;width:30px;height:30px;font-size:16px;cursor:pointer;line-height:1}
+  .mo-nav button:disabled{opacity:.35;cursor:default}
+  .mo-nav span{font-size:13px;font-weight:600;min-width:96px;text-align:center}
+  .days{display:flex;flex-wrap:wrap;gap:6px}
+  .day{width:30px;height:30px;border-radius:8px;font-size:12px;font-weight:600;display:inline-grid;place-items:center}
+  .day.p{background:var(--ok-soft);color:var(--ok)} .day.a{background:var(--danger-soft);color:var(--danger)}
+  .kv{display:flex;justify-content:space-between;padding:6px 0;font-size:14.5px}
+  .kv span:first-child{color:var(--muted)}
+  .kv .bad{color:var(--danger);font-weight:700} .kv .good{color:var(--ok);font-weight:700}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .chip{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:#1d3a6e;background:var(--brand-soft);border-radius:var(--pill);padding:5px 10px}
+  .chip button{background:none;border:none;color:var(--danger);font-weight:700;cursor:pointer;padding:0 0 0 4px;font-size:14px;line-height:1}
+
+  /* ---------- Fee sheet ---------- */
+  .balance{background:var(--bg);border-radius:14px;padding:14px 16px;margin-bottom:14px}
+  .balance .l{font-size:13px;color:var(--muted);font-weight:600}
+  .balance .n{font-size:32px;font-weight:700;letter-spacing:-.03em;margin-top:2px}
+  .balance .s{font-size:13px;color:var(--muted)}
+
+  /* ---------- Score entry ---------- */
+  .photo-row{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+  .photo-row .acts{display:flex;gap:14px;align-items:center}
+  .file-btn{position:relative;overflow:hidden}
+  .file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer;min-height:0}
+  .subj{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;background:var(--panel)}
+  .subj-top{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+  .subj-top input{font-weight:600;min-height:42px}
+  .subj-x{width:42px;height:42px;flex:0 0 42px;border-radius:11px;border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:18px;cursor:pointer}
+  .subj-nums{display:grid;grid-template-columns:1fr 1fr 62px 52px;gap:8px;align-items:end}
+  .subj-nums .label{font-size:12px;margin-bottom:4px;color:var(--muted)}
+  .subj-nums input{text-align:center;padding:10px 6px}
+  .ro{height:46px;border-radius:12px;background:var(--bg);display:grid;place-items:center;font-weight:700;font-size:16px}
+  .subj .rmk{margin-top:8px}
+  .subj .rmk input{min-height:40px;font-size:15px}
+  .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+  .save-state{font-size:12.5px;color:var(--muted);font-weight:600;white-space:nowrap}
+  .save-state.ok{color:var(--ok)} .save-state.bad{color:var(--danger)}
+
+  /* ---------- Sheets (all modals) ---------- */
+  .scrim{position:fixed;inset:0;z-index:60;background:rgba(15,22,38,.42);display:flex;align-items:flex-end;justify-content:center;animation:fade .18s ease}
+  .sheet{background:var(--panel);width:100%;max-width:560px;max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;border-radius:22px 22px 0 0;box-shadow:0 -10px 40px rgba(15,22,38,.2);animation:up .26s cubic-bezier(.32,.72,.28,1)}
+  .sheet.wide{max-width:680px}
+  .sheet-grab{width:38px;height:4px;border-radius:4px;background:#d5dae3;margin:8px auto 0;flex:0 0 auto}
+  .sheet-head{display:flex;align-items:center;gap:12px;padding:12px 18px 10px;flex:0 0 auto}
+  .sheet-head h3{margin:0;font-size:19px;font-weight:700;flex:1;min-width:0;letter-spacing:-.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sheet-head .sub{font-size:13px;color:var(--muted);margin-top:1px}
+  .sheet-body{padding:6px 18px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;flex:1 1 auto}
+  .sheet-foot{display:flex;gap:10px;padding:12px 18px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line-2);flex:0 0 auto}
+  .sheet-foot .btn{flex:1}
+  .x{width:32px;height:32px;flex:0 0 32px;border-radius:50%;border:none;background:var(--sunk);color:var(--ink-2);font-size:19px;line-height:1;cursor:pointer;display:grid;place-items:center}
+  .sheet .list{box-shadow:none}
+  @keyframes up{from{transform:translateY(30%);opacity:.5}to{transform:none;opacity:1}}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @media(min-width:720px){
+    .scrim{align-items:center;padding:24px}
+    .sheet{border-radius:22px;max-height:86vh}
+    .sheet-grab{display:none}
+    .sheet-foot{padding-bottom:14px}
+  }
+
+  /* ---------- Bottom nav ---------- */
+  .bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(255,255,255,.92);-webkit-backdrop-filter:saturate(180%) blur(14px);backdrop-filter:saturate(180%) blur(14px);border-top:1px solid var(--line);padding:6px 0 calc(6px + env(safe-area-inset-bottom))}
+  .bottom-nav .inner{max-width:720px;margin:0 auto;display:flex;justify-content:space-around;align-items:center;height:54px}
+  .nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:600;color:var(--muted);background:none;border:none;padding:4px 22px;cursor:pointer;min-width:84px}
+  .nav-item.on{color:var(--brand)}
+  .nav-add{width:54px;height:54px;border-radius:18px;border:none;background:var(--brand);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 6px 18px rgba(31,78,163,.35)}
+  .nav-add:active{transform:scale(.95)}
+  .nav-spacer{width:54px}
+
+  /* ---------- Login ---------- */
+  .login-wrap{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:calc(24px + env(safe-area-inset-top)) 20px 24px;background:var(--panel)}
+  .login-card{width:100%;max-width:400px}
+  .login-head{text-align:center;margin-bottom:24px}
+  .login-head .logo{width:64px;height:64px;margin:0 auto 12px;border-radius:16px;font-size:20px}
+  .login-head h1{font-size:24px;margin:0;letter-spacing:-.025em}
+  .login-head p{color:var(--muted);margin:2px 0 0;font-size:14px}
+  .login-card .seg{margin-bottom:18px}
+  .auth-switch{text-align:center;font-size:14px;color:var(--muted);margin-top:18px}
+
+  .loading{text-align:center;padding:80px 20px;color:var(--muted)}
+  .config-warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:14px 18px;border-radius:12px;margin:24px auto;max-width:680px;font-size:14px}
+
+  @media(max-width:380px){
+    .wrap{padding:0 12px}
+    .h1{font-size:24px}
+    .fig .n{font-size:19px}
+    .meta-grid{grid-template-columns:1fr}
+    .subj-nums{grid-template-columns:1fr 1fr 56px 46px}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const { useState, useEffect, useCallback, useRef, useMemo } = React;
+const h = React.createElement;
+const Frag = React.Fragment;
+
+/* Paste the logo data URI from your current file between the quotes
+   (the long "data:image/png;base64,..." string). Until then the app
+   shows a "DA" monogram and the report card prints without the crest. */
+const LOGO = "";
+
+const CONFIG = {
+  SUPABASE_URL: "https://mdwkbqmyhcghlivdvrbc.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_w8Tko0Y2gVGFIbLjkuvhjw_50aMLBp4"
+};
+
+const DEFAULT_SCHOOL = { name: "DORISBEN ACADEMY", line1: "", line2: "", authority: "GHANA EDUCATION SERVICE" };
+const BRANCHES = [
+  { id: "techiman", label: "Techiman" },
+  { id: "kintampo", label: "Kintampo (Annex)" }
+];
+const branchLabel = id => (BRANCHES.find(x => x.id === id) || {}).label || "";
+function resolveSchool(settings) {
+  const s = settings || {};
+  return {
+    name: (s.name && s.name.trim()) || DEFAULT_SCHOOL.name,
+    line1: s.line1 || DEFAULT_SCHOOL.line1,
+    line2: s.line2 || DEFAULT_SCHOOL.line2,
+    authority: (s.authority && s.authority.trim()) || DEFAULT_SCHOOL.authority
+  };
+}
+const DEFAULT_SUBJECTS = ["English Language", "Mathematics", "Science", "History", "Religious and Moral", "Ghana Lang.", "Creative Arts", "Computing"];
+const ROLE_LABELS = { teacher: "Teacher", headmaster: "Headmaster", owner: "Owner" };
+const isHead = role => role === "headmaster" || role === "owner";
+
+/* ---------- Local persistence (session + chosen term) ---------- */
+const SESSION_KEY = "da_session_v1";
+const TERM_KEY = "da_term_v1";
+const store = {
+  get(k) { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : null; } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+};
+
+const isConfigured = CONFIG.SUPABASE_URL.startsWith("http") && CONFIG.SUPABASE_ANON_KEY.length > 20;
+let sb = null;
+
+/* ---------- Small helpers ---------- */
+const initials = name => (name || "?").trim().split(/\s+/).slice(0, 2).map(w => w[0] || "").join("").toUpperCase();
+const num = v => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+const ghs = n => "GHS " + num(n).toLocaleString();
+function ordinal(n) {
+  if (!n || n < 1) return "—";
+  const s = ["th", "st", "nd", "rd"], v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+const isoDay = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const todayISO = () => isoDay(new Date());
+const addDays = (iso, n) => { const d = new Date(iso + "T00:00:00"); d.setDate(d.getDate() + n); return isoDay(d); };
+const fmtDay = d => new Date(d + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+const fmtDate = d => d ? new Date(d + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "";
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const teacherNames = f => [f && f.teacher_name, f && f.teacher_name_2].map(t => (t || "").trim()).filter(Boolean).join(" & ");
+function classCode(name) {
+  const m = (name || "").trim().match(/^([A-Za-z]+)\.?\s*(\d+)?/);
+  if (!m) return initials(name);
+  const lead = /^kg$/i.test(m[1]) ? "KG" : m[1][0].toUpperCase();
+  return lead + (m[2] || "");
+}
+
+/* ---------- GES grading: total (class + exam, out of 100) -> 1 (best) … 9 ---------- */
+const GRADE_BANDS = [[80, "1", "80–100"], [70, "2", "70–79"], [65, "3", "65–69"], [60, "4", "60–64"], [55, "5", "55–59"], [50, "6", "50–54"], [45, "7", "45–49"], [40, "8", "40–44"], [0, "9", "0–39"]];
+const gradeFor = total => { const t = num(total); return (GRADE_BANDS.find(b => t >= b[0]) || GRADE_BANDS[8])[1]; };
+function remarkFor(total) {
+  const t = num(total);
+  if (t >= 80) return "Excellent";
+  if (t >= 70) return "Very Good";
+  if (t >= 60) return "Good";
+  if (t >= 50) return "Average";
+  if (t >= 40) return "Pass";
+  return "Fail";
+}
+const AUTO_REMARKS = ["Excellent", "Very Good", "Good", "Average", "Credit", "Pass", "Fail", ""];
+const hasScore = r => (r.class_score !== "" && r.class_score != null) || (r.exam_score !== "" && r.exam_score != null);
+function recalc(row) {
+  const scored = hasScore(row);
+  const total = num(row.class_score) + num(row.exam_score);
+  const keep = row.remarks && !AUTO_REMARKS.includes(row.remarks);
+  return {
+    ...row,
+    marks: scored ? String(total) : "",
+    grade: scored ? gradeFor(total) : "",
+    remarks: keep ? row.remarks : (scored ? remarkFor(total) : "")
+  };
+}
+const newSubjectRow = subject => ({ subject, class_score: "", exam_score: "", marks: "", grade: "", remarks: "" });
+
+/* ============================================================
+   Terms and per-term records
+   ------------------------------------------------------------
+   Academic years are a label on each term ("2026/2027"), so a
+   year is simply the group its terms share. Each student keeps
+   one record per term in students.term_records[termId]:
+     { subjects, meta, extra_fields, fee_total, fee_paid }
+   Attendance stays keyed by date; a term's attendance is the
+   dates that fall inside that term.
+   If the database update hasn't been run yet, the app falls back
+   to one built-in term that reads and writes the old columns, so
+   nothing breaks in the meantime.
+   ============================================================ */
+const LEGACY_TERM = { id: "legacy", year_label: "", term_label: "This term", starts_on: "2026-09-05", ends_on: null, is_current: true, virtual: true };
+const sortTerms = ts => [...ts].sort((a, b) => String(a.starts_on || "").localeCompare(String(b.starts_on || "")));
+const termName = t => !t ? "" : t.year_label ? t.term_label + ", " + t.year_label : t.term_label;
+function shortTerm(t) {
+  if (!t) return "";
+  const m = /(\d+)/.exec(t.term_label || "");
+  const tl = m ? "Term " + m[1] : (t.term_label || "Term");
+  const y = (t.year_label || "").match(/\d{2}(\d{2})\D+\d{2}(\d{2})/);
+  return y ? tl + " · " + y[1] + "/" + y[2] : tl;
+}
+function termRange(term, terms) {
+  if (!term) return { start: "0000-01-01", end: "9999-12-31" };
+  if (term.virtual) return { start: term.starts_on, end: "9999-12-31" };
+  const sorted = sortTerms((terms || []).filter(t => !t.virtual));
+  const i = sorted.findIndex(t => t.id === term.id);
+  const next = sorted[i + 1];
+  const end = term.ends_on || (next && next.starts_on ? addDays(next.starts_on, -1) : "9999-12-31");
+  return { start: term.starts_on || "0000-01-01", end };
+}
+const inRange = (d, r) => d >= r.start && d <= r.end;
+/* The months a term's records cover, e.g. "September to December 2026".
+   A term with no end date (and no next term yet) runs to today ("so far"),
+   or reads "Starts …" if it hasn't begun. Pass plain=true to drop "so far" (used on report cards). */
+function termMonths(range, plain) {
+  if (!range || !range.start || range.start === "0000-01-01") return "";
+  const today = todayISO();
+  const noEnd = range.end === "9999-12-31";
+  if (range.start > today && noEnd) return "Starts " + fmtDate(range.start);
+  const s = new Date(range.start + "T00:00:00");
+  const e = new Date((noEnd ? today : range.end) + "T00:00:00");
+  const sm = MONTHS[s.getMonth()], em = MONTHS[e.getMonth()];
+  let txt;
+  if (s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth()) txt = sm + " " + s.getFullYear();
+  else if (s.getFullYear() === e.getFullYear()) txt = sm + " to " + em + " " + e.getFullYear();
+  else txt = sm + " " + s.getFullYear() + " to " + em + " " + e.getFullYear();
+  return noEnd && !plain ? txt + " so far" : txt;
+}
+const termWithMonths = (term, terms) => {
+  const m = termMonths(termRange(term, terms));
+  return termName(term) + (m ? " (" + m + ")" : "");
+};
+function attIn(att, r) {
+  const o = {};
+  Object.keys(att || {}).forEach(d => { if (/^\d{4}-\d{2}-\d{2}$/.test(d) && inRange(d, r)) o[d] = att[d]; });
+  return o;
+}
+function tally(map) {
+  const days = Object.keys(map || {});
+  const p = days.filter(d => map[d] === "present").length;
+  return { present: p, marked: days.length, rate: days.length ? Math.round(p / days.length * 100) : 0 };
+}
+
+function getRec(s, term) {
+  if (!s) return { subjects: [], meta: {}, extra_fields: [], fee_total: null, fee_paid: null };
+  if (!term || term.virtual) {
+    return { subjects: s.subjects || [], meta: s.meta || {}, extra_fields: s.extra_fields || [], fee_total: s.fee_total, fee_paid: s.fee_paid };
+  }
+  const r = (s.term_records || {})[term.id] || {};
+  return { subjects: r.subjects || [], meta: r.meta || {}, extra_fields: r.extra_fields || [], fee_total: r.fee_total ?? null, fee_paid: r.fee_paid ?? null };
+}
+/* Writes one term's record. `patch` can be an object, or a function that
+   receives the record as it is in the database right now and returns the
+   change. Reading fresh first means a teacher saving scores and a
+   headmaster logging a payment on the same child never overwrite each other. */
+async function saveRec(studentId, term, patch) {
+  const isFn = typeof patch === "function";
+  if (!term || term.virtual) {
+    let p = patch;
+    if (isFn) {
+      const cur = await sb.from("students").select("subjects,meta,extra_fields,fee_total,fee_paid").eq("id", studentId).single();
+      if (cur.error) throw cur.error;
+      p = patch(cur.data || {});
+    }
+    const { error } = await sb.from("students").update(p).eq("id", studentId);
+    if (error) throw error;
+    return;
+  }
+  const cur = await sb.from("students").select("term_records").eq("id", studentId).single();
+  if (cur.error) throw cur.error;
+  const all = { ...((cur.data && cur.data.term_records) || {}) };
+  const prev = all[term.id] || {};
+  all[term.id] = { ...prev, ...(isFn ? patch(prev) : patch) };
+  const { error } = await sb.from("students").update({ term_records: all }).eq("id", studentId);
+  if (error) throw error;
+}
+function newStudentPayload(term, base, rec) {
+  if (!term || term.virtual) return { ...base, ...rec };
+  return { ...base, term_records: { [term.id]: rec } };
+}
+function classStatus(f, term) {
+  if (!f) return "in_progress";
+  if (!term || term.virtual) return f.status || "in_progress";
+  return (f.term_status || {})[term.id] || "in_progress";
+}
+async function setClassStatus(classId, term, status) {
+  if (!term || term.virtual) {
+    await sb.from("classes").update({ status }).eq("id", classId);
+    return;
+  }
+  const cur = await sb.from("classes").select("term_status").eq("id", classId).single();
+  const all = { ...((cur.data && cur.data.term_status) || {}) };
+  all[term.id] = status;
+  await sb.from("classes").update({ term_status: all }).eq("id", classId);
+}
+async function saveMark(studentId, day, status) {
+  const cur = await sb.from("students").select("attendance").eq("id", studentId).single();
+  if (cur.error) throw cur.error;
+  const att = { ...((cur.data && cur.data.attendance) || {}) };
+  if (status === null) delete att[day]; else att[day] = status;
+  const { error } = await sb.from("students").update({ attendance: att }).eq("id", studentId);
+  if (error) throw error;
+}
+
+/* ---------- Rankings (live, per term) ---------- */
+// rows: [{ id, subjects }]
+function computeSubjectRanks(rows) {
+  const ranks = {};
+  rows.forEach(s => { ranks[s.id] = {}; });
+  const names = new Set();
+  rows.forEach(s => (s.subjects || []).forEach(r => { if (r.subject) names.add(r.subject); }));
+  names.forEach(subject => {
+    const scored = [];
+    rows.forEach(s => {
+      const r = (s.subjects || []).find(x => x.subject === subject);
+      if (r && r.marks !== "" && r.marks != null) scored.push({ id: s.id, total: num(r.marks) });
+    });
+    scored.sort((a, b) => b.total - a.total);
+    let last = null, lastRank = 0;
+    scored.forEach((e, i) => {
+      const rank = e.total === last ? lastRank : i + 1;
+      ranks[e.id][subject] = rank; last = e.total; lastRank = rank;
+    });
+  });
+  return ranks;
+}
+function computeClassRanks(rows) {
+  const ranks = {};
+  const scored = rows
+    .filter(s => (s.subjects || []).some(r => r.marks !== "" && r.marks != null))
+    .map(s => ({ id: s.id, agg: (s.subjects || []).reduce((a, r) => a + num(r.marks), 0) }))
+    .sort((a, b) => b.agg - a.agg);
+  let last = null, lastRank = 0;
+  scored.forEach((e, i) => {
+    const rank = e.agg === last ? lastRank : i + 1;
+    ranks[e.id] = rank; last = e.agg; lastRank = rank;
+  });
+  return ranks;
+}
+const totalOf = rec => (rec.subjects || []).reduce((a, r) => a + num(r.marks), 0);
+const hasMarks = rec => (rec.subjects || []).some(r => r.marks !== "" && r.marks != null);
+
+/* ---------- Accounts ---------- */
+const normName = s => (s || "").toString().trim().toLowerCase().replace(/\s+/g, " ");
+function normGhanaPhone(raw) {
+  const d = (raw || "").replace(/[^\d]/g, "");
+  let local = null;
+  if (d.length === 10 && d[0] === "0") local = d;
+  else if (d.length === 12 && d.slice(0, 3) === "233") local = "0" + d.slice(3);
+  else if (d.length === 9) local = "0" + d;
+  return local && local.length === 10 ? local : null;
+}
+function matchFoldersByName(folders, first, last) {
+  const full = normName(first + " " + last), rev = normName(last + " " + first);
+  const hit = t => t && (t === full || t === rev);
+  return (folders || []).filter(f => hit(normName(f.teacher_name)) || hit(normName(f.teacher_name_2)));
+}
+async function logEdit(entity, action, detail) {
+  try { await sb.from("edit_log").insert({ entity, action, detail, created_at: new Date().toISOString() }); } catch (e) {}
+}
+
+function compressImage(file, maxEdge, quality) {
+  return new Promise(resolve => {
+    try {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxEdge / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width * scale);
+        c.height = Math.round(img.height * scale);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        c.toBlob(b => resolve(b || file), "image/jpeg", quality);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    } catch (e) { resolve(file); }
+  });
+}
+
+/* ============================================================
+   Printable report card (one term)
+   ============================================================ */
+const esc = v => String(v == null ? "" : v).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function reportCardBody(student, rec, folder, ranks, numberOnRoll, school, classRank, term, range) {
+  const SCH = school || DEFAULT_SCHOOL;
+  const locationLine = branchLabel(folder && folder.branch) || SCH.line1 || "";
+  const tNames = teacherNames(folder);
+  const tContacts = [folder.teacher_contact, folder.teacher_contact_2].map(t => (t || "").trim()).filter(Boolean).join(" / ");
+  const meta = rec.meta || {};
+  const subj = rec.subjects || [];
+  const rows = subj.map(r => {
+    const pos = ranks && ranks[student.id] && ranks[student.id][r.subject];
+    const g = hasScore(r) ? gradeFor(num(r.class_score) + num(r.exam_score)) : "";
+    return `<tr><td class="sname">${esc(r.subject)}</td><td>${esc(r.class_score)}</td><td>${esc(r.exam_score)}</td><td class="tot">${esc(r.marks)}</td><td class="grd">${g}</td><td>${pos ? ordinal(pos) : ""}</td><td class="rmk">${esc(r.remarks)}</td></tr>`;
+  }).join("");
+  const photo = student.photo_url ? `<img src="${esc(student.photo_url)}" class="photo" />` : `<div class="photo placeholder">${initials(student.name)}</div>`;
+  const crest = LOGO ? `<img src="${LOGO}" class="crest" alt="" />` : "";
+  const feeTotal = num(rec.fee_total), feePaid = num(rec.fee_paid);
+  const hasFee = feeTotal > 0 || feePaid > 0;
+  const arrears = (meta.arrears || "").trim() ? meta.arrears : (hasFee ? ghs(Math.max(0, feeTotal - feePaid)) : "");
+  const t = tally(attIn(student.attendance, range));
+  const attendance = (meta.attendance || "").trim() ? meta.attendance : (t.marked ? `${t.present}/${t.marked}` : "");
+  const kv = (k, v, cls) => `<tr${cls ? ` class="${cls}"` : ""}><td class="k">${k}</td><td>${esc(v)}</td></tr>`;
+  const extras = (rec.extra_fields || []).map(f => kv(esc(f.label), f.value)).join("");
+  const key = GRADE_BANDS.map(b => `<span><b>${b[1]}</b> ${b[2]}</span>`).join("");
+  return `<div class="card">
+    <div class="auth">${esc(SCH.authority)}</div>
+    <div class="head">${crest}${photo}
+      <h1>${esc(SCH.name)}</h1>
+      <div class="l1">${esc(locationLine)}</div>
+      <div class="l2">${esc(SCH.line2)}</div>
+      <div class="exam">END OF TERM EXAMINATION REPORT</div>
+      ${term ? `<div class="termline">${esc([term.virtual ? "" : termName(term), termMonths(range, true)].filter(Boolean).join(", "))}</div>` : ""}
+    </div>
+    <div class="title">LEARNER'S REPORT CARD</div>
+    <table class="info">
+      <tr><td class="lbl">NAME</td><td>${esc(student.name)}</td><td class="lbl">CLASS</td><td>${esc(folder.class_name)}</td></tr>
+      <tr><td class="lbl">CLASS TEACHER</td><td>${esc(tNames)}</td><td class="lbl">NUMBER ON ROLL</td><td>${numberOnRoll || ""}</td></tr>
+    </table>
+    <table class="marks"><thead><tr>
+      <th style="text-align:left">SUBJECT</th><th>CLASS</th><th>EXAM</th><th>TOTAL</th><th>GRADE</th><th>POSITION</th><th style="text-align:left">REMARKS</th>
+    </tr></thead><tbody>
+      ${rows || '<tr><td colspan="7">No subjects recorded</td></tr>'}
+      <tr class="total"><td class="sname">TOTAL</td><td></td><td></td><td>${totalOf(rec)}</td><td></td><td></td><td></td></tr>
+    </tbody></table>
+    <table class="meta">
+      ${kv("Total attendance", attendance, "hl-att")}
+      ${kv("Position in class", classRank ? ordinal(classRank) : (meta.position_in_class || ""))}
+      ${kv("Interest", meta.interest)}
+      ${kv("Attitude", meta.attitude)}
+      ${kv("Class teacher's remarks", meta.teacher_remarks)}
+      ${kv("Promotion status", meta.promotion_status)}
+      ${kv("Fees paid (this term)", hasFee ? ghs(feePaid) : "", "hl-fee")}
+      ${kv("Arrears", arrears, "hl-fee")}
+      ${kv("Next term fees", meta.next_term_fees, "hl-fee")}
+      ${extras}
+    </table>
+    <div class="key"><span><b>Grading:</b></span>${key}</div>
+    <div class="foot">
+      <div class="info-cols">
+        <div class="info-col"><div class="ic-title">Class Teacher</div>
+          <div class="ic-line"><span>Name:</span> ${esc(tNames)}</div>
+          <div class="ic-line"><span>Contact:</span> ${esc(tContacts)}</div></div>
+        <div class="info-col"><div class="ic-title">Headmaster</div>
+          <div class="ic-line"><span>Name:</span> ${esc(folder.headmaster_name)}</div>
+          <div class="ic-line"><span>Contact:</span> ${esc(folder.headmaster_contact)}</div>
+          <div class="ic-line"><span>Next term begins:</span> <strong>${esc(folder.next_term_begins)}</strong></div></div>
+      </div>
+      <div class="sign"><div>Class Teacher's Signature</div><div>Headteacher's Signature</div></div>
+    </div>
+  </div>`;
+}
+function reportShellHTML(title, cards, printLabel) {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(title)}</title>
+  <style>
+    *{box-sizing:border-box;font-family:Georgia,'Times New Roman',serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body{margin:0;padding:16px;color:#1a1f2b;background:#eceef2}
+    .bar{max-width:780px;margin:0 auto 14px;display:flex;justify-content:space-between;gap:10px}
+    .bar button{padding:11px 16px;font-family:sans-serif;font-size:14px;font-weight:700;border:none;border-radius:10px;cursor:pointer}
+    .bar .back{background:#fff;color:#1f4ea3;border:1px solid #c9d4ea}
+    .bar .print{background:#1f4ea3;color:#fff}
+    .card{max-width:780px;margin:0 auto;background:#fff;border:2px solid #1f4ea3}
+    .card + .card{margin-top:28px}
+    .auth{background:#1f4ea3;color:#fff;text-align:center;padding:8px;font-size:17px;font-weight:bold;letter-spacing:.5px}
+    .head{text-align:center;padding:14px 96px 8px;position:relative;background:linear-gradient(180deg,#f4f8ff 0%,#fff 100%);min-height:104px}
+    .head h1{margin:0;font-size:21px;letter-spacing:.5px;color:#1f4ea3}
+    .head .l1{font-size:12px;font-weight:bold;margin-top:3px;color:#14345c}
+    .head .l2{font-size:10.5px;color:#333}
+    .head .exam{font-weight:bold;margin-top:7px;font-size:12.5px;color:#8a5a00;letter-spacing:.4px}
+    .head .termline{font-size:11.5px;font-weight:bold;color:#14345c;margin-top:2px}
+    .crest{position:absolute;left:16px;top:10px;width:72px;height:72px;object-fit:contain}
+    .photo{position:absolute;right:16px;top:12px;width:72px;height:86px;object-fit:cover;border:2px solid #1f4ea3}
+    .photo.placeholder{display:flex;align-items:center;justify-content:center;background:#eef3fb;color:#1f4ea3;font-size:22px;font-weight:bold;font-family:sans-serif}
+    .title{text-align:center;background:#1f4ea3;color:#fff;font-weight:bold;padding:7px;font-size:13px;letter-spacing:.6px}
+    table{width:100%;border-collapse:collapse}
+    .info td{border:1px solid #b9c4d8;padding:6px 9px;font-size:12px;font-weight:bold}
+    .info .lbl{background:#dbe7f8;color:#1f4ea3;width:16%;white-space:nowrap}
+    .marks th{background:#1f4ea3;color:#fff;padding:7px 4px;font-size:10.5px;border:1px solid #14345c}
+    .marks td{border:1px solid #b9c4d8;padding:6px;font-size:12px;text-align:center}
+    .marks tbody tr:nth-child(even):not(.total) td:not(.sname){background:#f6f9fe}
+    .marks td.sname{text-align:left;font-weight:bold;background:#eef3fb;color:#14345c}
+    .marks td.tot{font-weight:bold}
+    .marks td.grd{font-weight:bold;color:#1f4ea3}
+    .marks td.rmk{text-align:left;color:#374151}
+    .marks tr.total td{background:#e7f4ee;font-weight:bold;color:#0c6b53;font-size:13px;border-top:2px solid #0c6b53}
+    .meta td{border:1px solid #b9c4d8;padding:7px 9px;font-size:12.5px;font-weight:bold}
+    .meta td.k{background:#dbe7f8;color:#1f4ea3;width:24%;white-space:nowrap}
+    .meta tr.hl-att td{background:#eef3fb}
+    .meta tr.hl-att td.k{background:#dbe7f8}
+    .meta tr.hl-fee td{background:#fdf6e7;color:#5c3d00}
+    .meta tr.hl-fee td.k{background:#f7e8c8;color:#8a5a00}
+    .key{padding:8px 14px;font-size:10.5px;color:#333;border-top:2px solid #1f4ea3;background:#f4f8ff;display:flex;flex-wrap:wrap;gap:4px 14px}
+    .key b{color:#1f4ea3}
+    .foot{padding:16px 18px 18px;font-size:11.5px;border-top:2px solid #1f4ea3}
+    .info-cols{display:flex;gap:40px;margin-bottom:8px}
+    .info-col{flex:1}
+    .ic-title{font-weight:bold;font-size:12px;color:#1f4ea3;border-bottom:2px solid #c9d4ea;padding-bottom:3px;margin-bottom:6px}
+    .ic-line{margin:4px 0;line-height:1.5}
+    .ic-line span{color:#555;display:inline-block;min-width:96px}
+    .ic-line strong{color:#8a5a00}
+    .sign{margin-top:40px;display:flex;justify-content:space-between;gap:48px}
+    .sign div{border-top:1px solid #1f4ea3;padding-top:5px;flex:1;text-align:center;font-size:11px;font-weight:bold;color:#14345c}
+    @page{margin:12mm}
+    @media print{
+      body{padding:0;background:#fff}
+      .bar{display:none}
+      .card{max-width:none;break-after:page;page-break-after:always}
+      .card + .card{margin-top:0}
+      .card:last-child{break-after:auto;page-break-after:auto}
+    }
+  </style></head><body>
+  <div class="bar">
+    <button class="back" onclick="if(history.length>1){history.back()}else{window.close()}">Back</button>
+    <button class="print" onclick="window.print()">${printLabel}</button>
+  </div>
+  ${cards}
+  </body></html>`;
+}
+function openPrint(html) {
+  const w = window.open("", "_blank");
+  if (!w) { alert("Please allow pop-ups to open the report card."); return; }
+  w.document.write(html);
+  w.document.close();
+}
+/* ctx: { folder, term, range, ranks, classRanks, numberOnRoll, school } */
+function printReportCard(student, ctx) {
+  const rec = getRec(student, ctx.term);
+  openPrint(reportShellHTML(student.name + " report card",
+    reportCardBody(student, rec, ctx.folder, ctx.ranks, ctx.numberOnRoll, ctx.school, ctx.classRanks[student.id], ctx.term, ctx.range),
+    "Print or save as PDF"));
+}
+function printAllReportCards(students, ctx) {
+  if (!students.length) return;
+  const cards = students.map(s => reportCardBody(s, getRec(s, ctx.term), ctx.folder, ctx.ranks, ctx.numberOnRoll, ctx.school, ctx.classRanks[s.id], ctx.term, ctx.range)).join("\n");
+  openPrint(reportShellHTML((ctx.folder.class_name || "Class") + " report cards", cards, "Print all " + students.length));
+}
+
+/* ============================================================
+   UI primitives
+   ============================================================ */
+const svg = (d, size, sw) => h("svg", { width: size || 22, height: size || 22, viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
+  h("path", { d, stroke: "currentColor", strokeWidth: sw || 1.8, strokeLinecap: "round", strokeLinejoin: "round" }));
+const Icon = {
+  home: s => svg("M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-4V15h-5v5.5h-4A1.5 1.5 0 0 1 4 19v-8.5Z", s),
+  plus: s => svg("M12 5v14M5 12h14", s, 2.2),
+  menu: s => svg("M4 7h16M4 12h16M4 17h16", s),
+  down: s => svg("m6 9 6 6 6-6", s || 14, 2),
+  right: s => svg("m9 6 6 6-6 6", s || 18, 2),
+  left: s => svg("m15 6-6 6 6 6", s || 20, 2.2),
+  search: s => svg("m20 20-4.2-4.2M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z", s || 18),
+  more: s => h("svg", { width: s || 20, height: s || 20, viewBox: "0 0 24 24", "aria-hidden": "true" },
+    [5, 12, 19].map(x => h("circle", { key: x, cx: x, cy: 12, r: 1.8, fill: "currentColor" })))
+};
+function Logo({ cls }) {
+  return LOGO
+    ? h("div", { className: "logo " + (cls || "") }, h("img", { src: LOGO, alt: "" }))
+    : h("div", { className: "logo mono " + (cls || "") }, "DA");
+}
+const Av = ({ s, lg }) => h("div", { className: "av" + (lg ? " lg" : "") }, s && s.photo_url ? h("img", { src: s.photo_url, alt: "" }) : initials(s && s.name));
+const Chev = () => h("span", { className: "chev" }, Icon.right());
+function Seg({ value, options, onChange }) {
+  return h("div", { className: "seg", role: "tablist" }, options.map(o =>
+    h("button", { key: o.id, className: value === o.id ? "on" : "", role: "tab", "aria-selected": value === o.id, onClick: () => onChange(o.id) }, o.label)));
+}
+function Fig({ n, l, tone }) {
+  return h("div", { className: "fig" }, h("div", { className: "n tnum" + (tone ? " " + tone : "") }, n), h("div", { className: "l" }, l));
+}
+
+/* Every modal in the app is this one sheet: slides up from the bottom on a
+   phone, becomes a centred dialog on a wide screen. */
+function Sheet({ title, sub, onClose, children, foot, wide, headExtra }) {
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+  }, []);
+  return h("div", { className: "scrim", onClick: onClose },
+    h("div", { className: "sheet" + (wide ? " wide" : ""), role: "dialog", "aria-modal": "true", onClick: e => e.stopPropagation() },
+      h("div", { className: "sheet-grab" }),
+      h("div", { className: "sheet-head" },
+        h("div", { style: { flex: 1, minWidth: 0 } }, h("h3", null, title), sub ? h("div", { className: "sub" }, sub) : null),
+        headExtra || null,
+        h("button", { className: "x", onClick: onClose, "aria-label": "Close" }, "\u00d7")),
+      h("div", { className: "sheet-body" }, children),
+      foot ? h("div", { className: "sheet-foot" }, foot) : null));
+}
+function ActionSheet({ title, sub, items, onClose }) {
+  const shown = items.filter(Boolean);
+  return h(Sheet, { title, sub, onClose },
+    h("div", { className: "list" }, shown.map((it, i) =>
+      h("button", { key: i, className: "row flat" + (it.danger ? " danger" : ""), disabled: it.disabled, onClick: () => { onClose(); it.onClick(); } },
+        h("div", { className: "row-main" }, h("div", { className: "row-title" }, it.label), it.sub ? h("div", { className: "row-sub" }, it.sub) : null),
+        it.danger ? null : h(Chev)))));
+}
+
+/* ============================================================
+   Sign in / create account
+   ============================================================ */
+function Login({ onLogin }) {
+  const [role, setRole] = useState("teacher");
+  const [mode, setMode] = useState("login");
+  const [first, setFirst] = useState("");
+  const [last, setLast] = useState("");
+  const [classLevel, setClassLevel] = useState("");
+  const [branch, setBranch] = useState("");
+  const [phone, setPhone] = useState("");
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [err, setErr] = useState("");
+  const [ok, setOk] = useState("");
+  const [busy, setBusy] = useState(false);
+  const reset = () => { setErr(""); setOk(""); };
+  const isTeacher = role === "teacher";
+  // Headmasters are created by the owner (Manage staff), never self-registered.
+  const roles = mode === "login"
+    ? [{ id: "teacher", label: "Teacher" }, { id: "headmaster", label: "Headmaster" }, { id: "owner", label: "Owner" }]
+    : [{ id: "teacher", label: "Teacher" }, { id: "owner", label: "Owner" }];
+  const switchMode = m => {
+    if (m === "signup" && role === "headmaster") setRole("teacher");
+    setMode(m); reset(); setPw(""); setPw2("");
+  };
+
+  const doLogin = async () => {
+    reset();
+    if (isTeacher && (!first.trim() || !last.trim())) return setErr("Enter your first and last name.");
+    if (!isTeacher && !phone.trim()) return setErr("Enter your phone number.");
+    if (!pw) return setErr("Enter your password.");
+    setBusy(true);
+    try {
+      let q = sb.from("accounts").select("*").eq("role", role);
+      let ph = null;
+      if (isTeacher) q = q.ilike("first_name", first.trim()).ilike("last_name", last.trim());
+      else {
+        ph = normGhanaPhone(phone);
+        if (!ph) { setBusy(false); return setErr("That doesn't look like a valid Ghana phone number."); }
+        q = q.eq("phone", ph);
+      }
+      const { data, error } = await q;
+      if (error) throw error;
+      const acct = (data || []).find(a => a.password === pw);
+      if (!acct && !isTeacher && ph) {
+        const m = await sb.from("accounts").select("*").eq("role", "master").eq("phone", ph);
+        const master = !m.error && (m.data || []).find(a => a.password === pw);
+        if (master) return onLogin({ role, account: master, isMaster: true });
+      }
+      if (!acct) {
+        setBusy(false);
+        return setErr(!data || !data.length
+          ? (isTeacher ? "No account under that name. Create one, or check the spelling with your headmaster." : "No account for that phone number.")
+          : "That password doesn't match.");
+      }
+      onLogin({ role, account: acct });
+    } catch (e) { setErr("Could not sign in: " + e.message); setBusy(false); }
+  };
+
+  const doSignup = async () => {
+    reset();
+    if (!first.trim() || !last.trim()) return setErr("Enter your first and last name.");
+    if (!pw || !pw2) return setErr("Choose a password and confirm it.");
+    if (pw.length < 4) return setErr("Use a password of at least 4 characters.");
+    if (pw !== pw2) return setErr("The two passwords don't match.");
+    if (role !== "owner" && !branch) return setErr("Select your school location.");
+    let phoneNorm = null;
+    if (!isTeacher) {
+      phoneNorm = normGhanaPhone(phone);
+      if (!phoneNorm) return setErr("Enter a valid Ghana phone number, for example 024 123 4567.");
+    }
+    setBusy(true);
+    try {
+      let classId = null;
+      if (isTeacher) {
+        const fRes = await sb.from("classes").select("id,class_name,teacher_name,teacher_name_2");
+        if (fRes.error) throw fRes.error;
+        const matches = matchFoldersByName(fRes.data, first, last);
+        if (!matches.length) { setBusy(false); return setErr("No class is assigned to your name yet. Ask your headmaster to add you as class teacher, then try again."); }
+        let chosen = matches[0];
+        if (classLevel.trim() && matches.length > 1) {
+          const lvl = normName(classLevel);
+          chosen = matches.find(m => normName(m.class_name) === lvl || normName(m.class_name).includes(lvl)) || chosen;
+        }
+        classId = chosen.id;
+      }
+      let dupQ = sb.from("accounts").select("id").eq("role", role);
+      dupQ = isTeacher ? dupQ.ilike("first_name", first.trim()).ilike("last_name", last.trim()) : dupQ.eq("phone", phoneNorm);
+      const dup = await dupQ;
+      if (!dup.error && dup.data && dup.data.length) { setBusy(false); return setErr("An account already exists for that " + (isTeacher ? "name" : "phone number") + ". Sign in instead."); }
+      const payload = { role, first_name: first.trim(), last_name: last.trim(), phone: phoneNorm, password: pw, class_id: classId, branch: role === "owner" ? null : branch };
+      const { error } = await sb.from("accounts").insert(payload);
+      if (error) throw error;
+      setOk("Account created. Signing you in…");
+      setTimeout(() => onLogin({ role, account: payload }), 500);
+    } catch (e) { setErr("Could not create account: " + e.message); setBusy(false); }
+  };
+  const submit = () => mode === "login" ? doLogin() : doSignup();
+  const onEnter = e => { if (e.key === "Enter") submit(); };
+  const input = (lbl, val, set, extra) => h("label", { className: "field" }, h("span", { className: "label" }, lbl),
+    h("input", { value: val, onChange: e => { set(e.target.value); reset(); }, onKeyDown: onEnter, ...extra }));
+
+  return h("div", { className: "login-wrap" }, h("div", { className: "login-card" },
+    h("div", { className: "login-head" }, h(Logo), h("h1", null, "Dorisben Academy"), h("p", null, mode === "signup" ? "Create your account" : "Sign in to your school")),
+    h(Seg, { value: role, options: roles, onChange: r => { setRole(r); reset(); setPw(""); setPw2(""); setBranch(""); } }),
+    (isTeacher || mode === "signup") ? h("div", { className: "row-2" },
+      input("First name", first, setFirst, { autoComplete: "given-name" }),
+      input("Last name", last, setLast, { autoComplete: "family-name" })) : null,
+    mode === "signup" && role !== "owner" ? h("label", { className: "field" }, h("span", { className: "label" }, "School location"),
+      h("select", { value: branch, onChange: e => { setBranch(e.target.value); reset(); } },
+        h("option", { value: "" }, "Select your location"),
+        BRANCHES.map(b => h("option", { key: b.id, value: b.id }, b.label)))) : null,
+    isTeacher && mode === "signup" ? h("label", { className: "field" }, h("span", { className: "label" }, "Your class"),
+      h("input", { value: classLevel, onChange: e => { setClassLevel(e.target.value); reset(); }, onKeyDown: onEnter, placeholder: "For example Basic 4 or KG 1" }),
+      h("div", { className: "hint" }, "Must match the class your headmaster assigned to you.")) : null,
+    !isTeacher ? input("Phone number", phone, setPhone, { inputMode: "tel", placeholder: "024 123 4567", autoComplete: "tel" }) : null,
+    input("Password", pw, setPw, { type: "password", autoComplete: mode === "signup" ? "new-password" : "current-password" }),
+    mode === "signup" ? input("Confirm password", pw2, setPw2, { type: "password", autoComplete: "new-password" }) : null,
+    err ? h("div", { className: "err" }, err) : null,
+    ok ? h("div", { className: "okmsg" }, ok) : null,
+    h("button", { className: "btn btn-primary btn-block", onClick: submit, disabled: busy }, busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"),
+    h("div", { className: "auth-switch" }, mode === "login"
+      ? h(Frag, null, "New here? ", h("button", { className: "link", onClick: () => switchMode("signup") }, "Create an account"))
+      : h(Frag, null, "Have an account? ", h("button", { className: "link", onClick: () => switchMode("login") }, "Sign in")))));
+}
+
+/* ============================================================
+   Class (add / edit)
+   ============================================================ */
+function ClassModal({ folder, role, accountBranch, lockedBranch, onClose, onSaved }) {
+  const editing = !!folder;
+  const isOwner = role === "owner";
+  const canAssign = isHead(role);
+  const [f, setF] = useState({
+    class_name: folder?.class_name || "",
+    teacher_name: folder?.teacher_name || "", teacher_contact: folder?.teacher_contact || "",
+    teacher_name_2: folder?.teacher_name_2 || "", teacher_contact_2: folder?.teacher_contact_2 || "",
+    headmaster_name: folder?.headmaster_name || "", headmaster_contact: folder?.headmaster_contact || "",
+    next_term_begins: folder?.next_term_begins || "",
+    branch: folder?.branch || lockedBranch || accountBranch || ""
+  });
+  const [second, setSecond] = useState(!!(folder && folder.teacher_name_2));
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+  const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
+  const field = (k, lbl, ph, extra) => h("label", { className: "field" }, h("span", { className: "label" }, lbl), h("input", { value: f[k], onChange: set(k), placeholder: ph, ...extra }));
+
+  const save = async () => {
+    if (!f.class_name.trim()) return setErr("Class name is required.");
+    if (canAssign && !f.teacher_name.trim()) return setErr("Class teacher name is required.");
+    if (isOwner && !f.branch) return setErr("Choose which location this class belongs to.");
+    setSaving(true); setErr("");
+    const payload = { class_name: f.class_name.trim() };
+    if (canAssign) {
+      ["teacher_name", "teacher_contact", "teacher_name_2", "teacher_contact_2", "headmaster_name", "headmaster_contact", "next_term_begins"].forEach(k => { payload[k] = f[k].trim(); });
+      if (!second) { payload.teacher_name_2 = ""; payload.teacher_contact_2 = ""; }
+    }
+    if (isOwner && f.branch) payload.branch = f.branch;
+    try {
+      if (editing) {
+        const { error } = await sb.from("classes").update(payload).eq("id", folder.id);
+        if (error) throw error;
+        if (folder.class_name !== payload.class_name) await logEdit("class", "rename", `"${folder.class_name}" → "${payload.class_name}"`);
+      } else {
+        payload.status = "in_progress";
+        if (payload.teacher_name == null) payload.teacher_name = "";
+        if (!payload.branch && accountBranch) payload.branch = accountBranch;
+        const { error } = await sb.from("classes").insert(payload);
+        if (error) throw error;
+      }
+      onSaved();
+    } catch (e) { setErr("Could not save: " + e.message); setSaving(false); }
+  };
+
+  return h(Sheet, {
+    title: editing ? "Edit class" : "New class", onClose,
+    foot: [h("button", { key: "c", className: "btn", onClick: onClose }, "Cancel"),
+      h("button", { key: "s", className: "btn btn-primary", onClick: save, disabled: saving }, saving ? "Saving…" : editing ? "Save" : "Create class")]
+  },
+    field("class_name", "Class name", "For example Basic 4", { autoFocus: !editing }),
+    isOwner ? (lockedBranch && !editing
+      ? h("label", { className: "field" }, h("span", { className: "label" }, "School"), h("input", { value: branchLabel(lockedBranch), readOnly: true }))
+      : h("label", { className: "field" }, h("span", { className: "label" }, "School"),
+        h("select", { value: f.branch, onChange: set("branch") }, h("option", { value: "" }, "Select a location"),
+          BRANCHES.map(b => h("option", { key: b.id, value: b.id }, b.label))))) : null,
+    canAssign ? h(Frag, null,
+      h("div", { className: "row-2" }, field("teacher_name", "Class teacher", "Full name"), field("teacher_contact", "Phone", "024 000 0000", { inputMode: "tel" })),
+      second
+        ? h("div", { className: "row-2" }, field("teacher_name_2", "Second teacher", "Full name"), field("teacher_contact_2", "Phone", "024 000 0000", { inputMode: "tel" }))
+        : h("button", { className: "link", style: { marginBottom: 16 }, onClick: () => setSecond(true) }, "+ Add a second teacher"),
+      h("div", { className: "row-2" }, field("headmaster_name", "Headmaster", "Mr. K. Owusu"), field("headmaster_contact", "Phone", "024 000 0000", { inputMode: "tel" })),
+      field("next_term_begins", "Next term begins", "For example 5th January 2027"),
+      h("div", { className: "hint", style: { marginTop: -6 } }, "Teacher and headmaster details print on every report card in this class.")
+    ) : h("div", { className: "hint" }, "Your headmaster assigns the class teacher and contact details."),
+    err ? h("div", { className: "err", style: { marginTop: 12 } }, err) : null);
+}
+
+/* ============================================================
+   School information (prints on report cards)
+   ============================================================ */
+function SchoolSettingsModal({ settings, onClose, onSaved }) {
+  const [f, setF] = useState({ name: settings?.name || "", line1: settings?.line1 || "", line2: settings?.line2 || "", authority: settings?.authority || "" });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+  const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
+  const save = async () => {
+    if (!f.name.trim()) return setErr("School name is required.");
+    setSaving(true); setErr("");
+    const { error } = await sb.from("school_settings").upsert({ id: 1, name: f.name.trim(), line1: f.line1.trim(), line2: f.line2.trim(), authority: f.authority.trim() }, { onConflict: "id" });
+    if (error) { setErr("Could not save: " + error.message); setSaving(false); return; }
+    onSaved();
+  };
+  const field = (k, lbl, ph) => h("label", { className: "field" }, h("span", { className: "label" }, lbl), h("input", { value: f[k], onChange: set(k), placeholder: ph }));
+  return h(Sheet, {
+    title: "School information", sub: "Printed at the top of every report card", onClose,
+    foot: [h("button", { key: "c", className: "btn", onClick: onClose }, "Cancel"),
+      h("button", { key: "s", className: "btn btn-primary", onClick: save, disabled: saving }, saving ? "Saving…" : "Save")]
+  },
+    field("name", "School name", "Dorisben Academy"),
+    field("line1", "Address line 1", "New Krobo, Techiman"),
+    field("line2", "Address line 2", "Opposite Alhaji Danjuma Water Supply"),
+    field("authority", "Governing authority", "Ghana Education Service"),
+    err ? h("div", { className: "err" }, err) : null);
+}
+
+/* ============================================================
+   Manage staff (owner)
+   ============================================================ */
+function ManageStaffModal({ onClose, onChanged }) {
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+  const [ok, setOk] = useState("");
+  const [busyId, setBusyId] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const [f, setF] = useState({ first: "", last: "", phone: "", branch: "", pw: "" });
+  const [creating, setCreating] = useState(false);
+  const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
+
+  const loadAccounts = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await sb.from("accounts").select("*").in("role", ["teacher", "headmaster"]).order("first_name");
+    if (error) setErr("Could not load accounts: " + error.message); else setAccounts(data || []);
+    setLoading(false);
+  }, []);
+  useEffect(() => { loadAccounts(); }, [loadAccounts]);
+  const nameOf = a => ((a.first_name || "") + " " + (a.last_name || "")).trim() || "—";
+
+  const remove = async a => {
+    if (!confirm(`Delete ${nameOf(a)}'s account?\n\nThey will no longer be able to sign in. Class and student records are kept.`)) return;
+    setBusyId(a.id); setErr(""); setOk("");
+    const { error } = await sb.from("accounts").delete().eq("id", a.id);
+    setBusyId(null);
+    if (error) return setErr("Could not delete: " + error.message);
+    setOk(nameOf(a) + "'s account was removed.");
+    loadAccounts(); onChanged && onChanged();
+  };
+  const create = async () => {
+    setErr(""); setOk("");
+    if (!f.first.trim() || !f.last.trim()) return setErr("Enter the headmaster's first and last name.");
+    const ph = normGhanaPhone(f.phone);
+    if (!ph) return setErr("Enter a valid Ghana phone number, for example 024 123 4567.");
+    if (!f.branch) return setErr("Choose which location this headmaster runs.");
+    if (f.pw.length < 4) return setErr("Set a temporary password of at least 4 characters.");
+    setCreating(true);
+    try {
+      const dup = await sb.from("accounts").select("id").eq("role", "headmaster").eq("phone", ph);
+      if (!dup.error && dup.data && dup.data.length) { setCreating(false); return setErr("A headmaster already uses that phone number."); }
+      const { error } = await sb.from("accounts").insert({ role: "headmaster", first_name: f.first.trim(), last_name: f.last.trim(), phone: ph, password: f.pw, class_id: null, branch: f.branch });
+      if (error) throw error;
+      setOk(f.first.trim() + " can now sign in as headmaster with their phone number.");
+      setF({ first: "", last: "", phone: "", branch: "", pw: "" });
+      setAdding(false); loadAccounts(); onChanged && onChanged();
+    } catch (e) { setErr("Could not create headmaster: " + e.message); }
+    setCreating(false);
+  };
+  const row = a => h("div", { key: a.id, className: "row static" },
+    h("div", { className: "av" }, initials(nameOf(a))),
+    h("div", { className: "row-main" }, h("div", { className: "row-title" }, nameOf(a)),
+      h("div", { className: "row-sub" }, [branchLabel(a.branch) || "No location", a.phone].filter(Boolean).join(", "))),
+    h("button", { className: "btn btn-sm btn-danger", disabled: busyId === a.id, onClick: () => remove(a) }, busyId === a.id ? "Removing…" : "Delete"));
+  const heads = accounts.filter(a => a.role === "headmaster");
+  const teachers = accounts.filter(a => a.role === "teacher");
+
+  return h(Sheet, { title: "Staff", onClose, foot: h("button", { className: "btn", onClick: onClose }, "Done") },
+    err ? h("div", { className: "err" }, err) : null,
+    ok ? h("div", { className: "okmsg" }, ok) : null,
+    h("div", { className: "sec", style: { marginTop: 4 } }, h("h2", null, "Headmasters", h("span", { className: "count" }, heads.length)),
+      adding ? null : h("button", { className: "link", onClick: () => { setAdding(true); setOk(""); } }, "+ Add")),
+    adding ? h("div", { className: "list", style: { padding: 14, marginBottom: 12 } },
+      h("div", { className: "row-2" },
+        h("label", { className: "field" }, h("span", { className: "label" }, "First name"), h("input", { value: f.first, onChange: set("first") })),
+        h("label", { className: "field" }, h("span", { className: "label" }, "Last name"), h("input", { value: f.last, onChange: set("last") }))),
+      h("label", { className: "field" }, h("span", { className: "label" }, "Phone number"), h("input", { value: f.phone, onChange: set("phone"), inputMode: "tel", placeholder: "024 123 4567" })),
+      h("label", { className: "field" }, h("span", { className: "label" }, "Location"), h("select", { value: f.branch, onChange: set("branch") },
+        h("option", { value: "" }, "Select a location"), BRANCHES.map(b => h("option", { key: b.id, value: b.id }, b.label)))),
+      h("label", { className: "field" }, h("span", { className: "label" }, "Temporary password"), h("input", { value: f.pw, onChange: set("pw"), placeholder: "At least 4 characters" })),
+      h("div", { style: { display: "flex", gap: 8 } },
+        h("button", { className: "btn btn-sm btn-primary", onClick: create, disabled: creating }, creating ? "Creating…" : "Create headmaster"),
+        h("button", { className: "btn btn-sm btn-ghost", onClick: () => { setAdding(false); setErr(""); } }, "Cancel"))) : null,
+    loading ? h("p", { className: "muted" }, "Loading…") : heads.length ? h("div", { className: "list" }, heads.map(row)) : h("p", { className: "hint" }, "No headmasters yet. Only you can add one."),
+    h("div", { className: "sec" }, h("h2", null, "Teachers", h("span", { className: "count" }, teachers.length))),
+    h("p", { className: "hint", style: { margin: "-2px 4px 10px" } }, "Delete a teacher's sign-in when they leave. Their class and student records stay."),
+    loading ? null : teachers.length ? h("div", { className: "list" }, teachers.map(row)) : h("p", { className: "hint" }, "No teacher accounts yet."));
+}
+
+/* ============================================================
+   Terms and academic years
+   ============================================================ */
+// Months a term being created or edited would cover, before it is saved.
+function formRange(form, real) {
+  if (form.ends_on) return { start: form.starts_on, end: form.ends_on };
+  const next = sortTerms(real).find(t => t.id !== form.id && t.starts_on > form.starts_on);
+  return { start: form.starts_on, end: next ? addDays(next.starts_on, -1) : "9999-12-31" };
+}
+function TermsSheet({ terms, activeTerm, canManage, tableReady, students, folders, onPick, onClose, onChanged }) {
+  const real = terms.filter(t => !t.virtual);
+  const [form, setForm] = useState(null); // null | {id?, year_label, term_label, starts_on, ends_on, make_current}
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+
+  // Group by academic year, newest year first, terms in order inside a year.
+  const groups = useMemo(() => {
+    const by = {};
+    sortTerms(real).forEach(t => { (by[t.year_label || "Other"] = by[t.year_label || "Other"] || []).push(t); });
+    return Object.keys(by).sort((a, b) => String(by[b][0].starts_on).localeCompare(String(by[a][0].starts_on))).map(y => ({ year: y, terms: by[y] }));
+  }, [terms]);
+
+  const startNew = () => {
+    const last = sortTerms(real).slice(-1)[0];
+    let year = last ? last.year_label : "", n = 1;
+    if (last) {
+      const m = /(\d+)/.exec(last.term_label || "");
+      n = m ? +m[1] + 1 : 1;
+      if (n > 3) { // next academic year
+        n = 1;
+        const y = (last.year_label || "").match(/(\d{4})\D+(\d{4})/);
+        if (y) year = (+y[1] + 1) + "/" + (+y[2] + 1);
+      }
+    }
+    setErr("");
+    setForm({ year_label: year, term_label: "Term " + n, starts_on: "", ends_on: "", make_current: true });
+  };
+  const used = id => students.some(s => s.term_records && s.term_records[id]) || folders.some(f => f.term_status && f.term_status[id]);
+
+  const save = async () => {
+    if (!form.year_label.trim()) return setErr("Enter the academic year, for example 2026/2027.");
+    if (!form.term_label.trim()) return setErr("Enter a term name, for example Term 2.");
+    if (!form.starts_on) return setErr("Choose the date the term starts.");
+    setSaving(true); setErr("");
+    const payload = { year_label: form.year_label.trim(), term_label: form.term_label.trim(), starts_on: form.starts_on, ends_on: form.ends_on || null };
+    try {
+      let id = form.id;
+      if (id) {
+        const { error } = await sb.from("academic_terms").update(payload).eq("id", id);
+        if (error) throw error;
+      } else {
+        const { data, error } = await sb.from("academic_terms").insert(payload).select().single();
+        if (error) throw error;
+        id = data.id;
+      }
+      if (form.make_current) {
+        await sb.from("academic_terms").update({ is_current: false }).neq("id", id);
+        await sb.from("academic_terms").update({ is_current: true }).eq("id", id);
+      }
+      const isNew = !form.id;
+      setForm(null);
+      await onChanged();
+      if (form.make_current || isNew) onPick(id);
+      if (isNew) onClose();
+    } catch (e) { setErr("Could not save term: " + e.message); }
+    setSaving(false);
+  };
+  const del = async () => {
+    if (used(form.id)) return setErr("This term already has scores or a submitted class, so it can't be deleted.");
+    if (!confirm("Delete " + termName(form) + "?")) return;
+    setSaving(true);
+    const { error } = await sb.from("academic_terms").delete().eq("id", form.id);
+    setSaving(false);
+    if (error) return setErr("Could not delete: " + error.message);
+    setForm(null); onChanged();
+  };
+
+  if (form) {
+    const set = k => e => setForm(p => ({ ...p, [k]: e.target.value }));
+    return h(Sheet, {
+      title: form.id ? "Edit term" : "New term", onClose: () => setForm(null),
+      foot: [h("button", { key: "c", className: "btn", onClick: () => setForm(null) }, "Back"),
+        h("button", { key: "s", className: "btn btn-primary", onClick: save, disabled: saving }, saving ? "Saving…" : form.id ? "Save" : "Create term")]
+    },
+      h("div", { className: "row-2" },
+        h("label", { className: "field" }, h("span", { className: "label" }, "Academic year"), h("input", { value: form.year_label, onChange: set("year_label"), placeholder: "2026/2027" })),
+        h("label", { className: "field" }, h("span", { className: "label" }, "Term"), h("input", { value: form.term_label, onChange: set("term_label"), placeholder: "Term 1" }))),
+      h("div", { className: "row-2" },
+        h("label", { className: "field" }, h("span", { className: "label" }, "Starts"), h("input", { type: "date", value: form.starts_on || "", onChange: set("starts_on") })),
+        h("label", { className: "field" }, h("span", { className: "label" }, "Ends (optional)"), h("input", { type: "date", value: form.ends_on || "", onChange: set("ends_on") }))),
+      h("label", { className: "check" }, h("input", { type: "checkbox", checked: !!form.make_current, onChange: e => setForm(p => ({ ...p, make_current: e.target.checked })) }), "Make this the current term"),
+      form.starts_on ? h("p", { className: "hint", style: { marginTop: 0 } }, "Records kept for: ", h("strong", null, termMonths(formRange(form, real)))) : null,
+      h("p", { className: "hint" }, "Scores, report-card details and fees are kept separately for each term. Attendance counts the school days between the start and end dates. If you leave the end date blank, the term runs until the next term starts. A new academic year starts its own group."),
+      err ? h("div", { className: "err" }, err) : null,
+      form.id ? h("button", { className: "link danger", style: { marginTop: 18 }, onClick: del }, "Delete this term") : null);
+  }
+
+  return h(Sheet, { title: "Terms", sub: "Pick the term you want to work in", onClose },
+    !tableReady && canManage ? h("div", { className: "notice", style: { marginTop: 0, marginBottom: 14 } },
+      h("div", { className: "grow" }, h("strong", null, "One-time database update needed. "), "Run the terms migration in Supabase to keep each term's records separate. Until then everything stays in one term.")) : null,
+    real.length === 0 ? h("div", { className: "list" }, h("div", { className: "row static flat" },
+      h("div", { className: "row-main" }, h("div", { className: "row-title" }, termName(activeTerm)), h("div", { className: "row-sub" }, termMonths(termRange(activeTerm, terms)) || "All records are in one term for now")),
+      h("span", { className: "pill warn" }, "Current"))) : null,
+    groups.map(g => h(Frag, { key: g.year },
+      h("div", { className: "sec" }, h("h2", null, g.year)),
+      h("div", { className: "list" }, g.terms.map(t =>
+        h("div", { key: t.id, className: "row flat tap", onClick: () => { onPick(t.id); onClose(); } },
+          h("div", { className: "row-main" },
+            h("div", { className: "row-title" }, t.term_label),
+            h("div", { className: "row-sub", style: { whiteSpace: "normal" } }, termMonths(termRange(t, terms)))),
+          h("div", { className: "row-end" },
+            t.is_current ? h("span", { className: "pill warn" }, "Current") : null,
+            activeTerm && activeTerm.id === t.id ? h("span", { className: "pill brand" }, "Viewing") : null,
+            canManage ? h("button", { className: "link", onClick: e => { e.stopPropagation(); setErr(""); setForm({ ...t, ends_on: t.ends_on || "", make_current: !!t.is_current }); } }, "Edit") : null)))))),
+    canManage && tableReady ? h("button", { className: "btn btn-block", style: { marginTop: 18 }, onClick: startNew }, "+ New term") : null);
+}
+
+/* ============================================================
+   Score entry. Saves itself as the teacher types, so grades are
+   always up to date and nothing is lost if the phone locks.
+   ============================================================ */
+const emptyMeta = () => ({ interest: "", attitude: "", teacher_remarks: "", attendance: "", position_in_class: "", promotion_status: "", next_term_fees: "", arrears: "" });
+function initSubjects(rec) {
+  if (rec && rec.subjects && rec.subjects.length) {
+    return rec.subjects.map(r => recalc({ subject: r.subject || "", class_score: r.class_score ?? "", exam_score: r.exam_score ?? "", marks: r.marks ?? "", grade: "", remarks: r.remarks || "" }));
+  }
+  return DEFAULT_SUBJECTS.map(newSubjectRow);
+}
+function StudentModal({ student, classId, term, terms, submitted, onClose, onSaved }) {
+  const rec0 = student ? getRec(student, term) : null;
+  const [sid, setSid] = useState(student ? student.id : null);
+  const [name, setName] = useState(student?.name || "");
+  const [photoUrl, setPhotoUrl] = useState(student?.photo_url || "");
+  const [subjects, setSubjects] = useState(() => initSubjects(rec0));
+  const [meta, setMeta] = useState(() => ({ ...emptyMeta(), ...((rec0 && rec0.meta) || {}) }));
+  const [fields, setFields] = useState((rec0 && rec0.extra_fields) || []);
+  const [uploading, setUploading] = useState(false);
+  const [state, setState] = useState(""); // "", pending, saving, saved, error
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [added, setAdded] = useState(0);
+  const savedName = useRef(student?.name || "");
+  const reverted = useRef(!submitted);
+  const dirty = useRef(false);
+  const skip = useRef(true);
+  const timer = useRef(null);
+  const latest = useRef();
+  latest.current = { sid, name, photoUrl, subjects, meta, fields };
+
+  const buildRec = st => ({
+    subjects: st.subjects.filter(s => s.subject.trim()).map(recalc),
+    meta: st.meta,
+    extra_fields: st.fields.filter(f => f.label.trim())
+  });
+  const persist = async () => {
+    const st = latest.current;
+    if (!st.sid || !st.name.trim()) return;
+    setState("saving");
+    try {
+      const { error } = await sb.from("students").update({ name: st.name.trim(), photo_url: st.photoUrl || null }).eq("id", st.sid);
+      if (error) throw error;
+      await saveRec(st.sid, term, buildRec(st));
+      if (st.name.trim() !== savedName.current) {
+        await logEdit("student", "rename", `"${savedName.current}" → "${st.name.trim()}"`);
+        savedName.current = st.name.trim();
+      }
+      // Changing marks after a class was submitted puts it back in progress.
+      if (!reverted.current) { await setClassStatus(classId, term, "in_progress"); reverted.current = true; }
+      dirty.current = false;
+      setState("saved"); setErr("");
+      onSaved();
+    } catch (e) { setState("error"); setErr("Could not save: " + e.message); }
+  };
+  useEffect(() => {
+    if (skip.current) { skip.current = false; return; }
+    if (!latest.current.sid) return;
+    dirty.current = true; setState("pending");
+    clearTimeout(timer.current);
+    timer.current = setTimeout(persist, 900);
+  }, [name, photoUrl, subjects, meta, fields]);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const close = async () => {
+    clearTimeout(timer.current);
+    if (dirty.current && latest.current.sid) await persist();
+    onClose();
+  };
+
+  const create = async andNext => {
+    if (!name.trim()) return setErr("Enter the student's name.");
+    setBusy(true); setErr("");
+    try {
+      const payload = newStudentPayload(term, { name: name.trim(), class_id: classId, photo_url: photoUrl || null }, buildRec(latest.current));
+      const { data, error } = await sb.from("students").insert(payload).select().single();
+      if (error) throw error;
+      if (!reverted.current) { await setClassStatus(classId, term, "in_progress"); reverted.current = true; }
+      onSaved();
+      if (andNext) {
+        skip.current = true;
+        setName(""); setPhotoUrl(""); setSubjects(DEFAULT_SUBJECTS.map(newSubjectRow)); setMeta(emptyMeta()); setFields([]);
+        setAdded(n => n + 1);
+      } else {
+        savedName.current = data.name;
+        setSid(data.id); setState("saved");
+      }
+    } catch (e) { setErr("Could not add student: " + e.message); }
+    setBusy(false);
+  };
+
+  const setSub = (i, k, v) => setSubjects(s => s.map((r, idx) => idx !== i ? r : (k === "class_score" || k === "exam_score") ? recalc({ ...r, [k]: v }) : { ...r, [k]: v }));
+  const setM = k => e => setMeta(m => ({ ...m, [k]: e.target.value }));
+  const pickPhoto = async e => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    setUploading(true); setErr("");
+    try {
+      const blob = await compressImage(file, 600, 0.8);
+      const path = `students/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+      const up = await sb.storage.from("student-photos").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+      if (up.error) throw up.error;
+      setPhotoUrl(sb.storage.from("student-photos").getPublicUrl(path).data.publicUrl);
+    } catch (e2) { setErr("Photo upload failed: " + e2.message); }
+    setUploading(false);
+  };
+
+  const stateText = { pending: "Editing…", saving: "Saving…", saved: "Saved", error: "Not saved" }[state] || "";
+  const metaField = (k, lbl, ph) => h("label", { className: "field" }, h("span", { className: "label" }, lbl), h("input", { value: meta[k], onChange: setM(k), placeholder: ph }));
+  const metaFilled = Object.values(meta).some(v => (v || "").trim()) || fields.length > 0;
+  const scored = subjects.filter(hasScore).length;
+
+  return h(Sheet, {
+    wide: true, onClose: close,
+    title: sid ? (name || "Student") : "Add student",
+    sub: termWithMonths(term, terms) + (sid && scored ? ", " + scored + " of " + subjects.length + " scored" : ""),
+    headExtra: sid && stateText ? h("span", { className: "save-state" + (state === "saved" ? " ok" : state === "error" ? " bad" : "") }, stateText) : null,
+    foot: sid
+      ? h("button", { className: "btn btn-primary", onClick: close }, "Done")
+      : [h("button", { key: "n", className: "btn", onClick: () => create(true), disabled: busy || uploading }, "Add and next"),
+        h("button", { key: "a", className: "btn btn-primary", onClick: () => create(false), disabled: busy || uploading }, busy ? "Adding…" : "Add student")]
+  },
+    added ? h("div", { className: "okmsg" }, added + (added === 1 ? " student" : " students") + " added. Enter the next name, or close when you're done.") : null,
+    h("div", { className: "photo-row" },
+      h(Av, { s: { name, photo_url: photoUrl }, lg: true }),
+      h("div", { className: "acts" },
+        h("span", { className: "link file-btn" }, uploading ? "Uploading…" : photoUrl ? "Change photo" : "Add photo",
+          h("input", { type: "file", accept: "image/*", onChange: pickPhoto, disabled: uploading, "aria-label": "Student photo" })),
+        photoUrl ? h("button", { className: "link danger", onClick: () => setPhotoUrl("") }, "Remove") : null)),
+    h("label", { className: "field" }, h("span", { className: "label" }, "Full name"),
+      h("input", { value: name, onChange: e => setName(e.target.value), placeholder: "For example Abanfo Godfred", autoFocus: !sid })),
+    !sid ? h("p", { className: "hint", style: { marginTop: -6 } }, "Only the name is needed now. Scores can be added any time.") : null,
+
+    h("div", { className: "sec", style: { margin: "20px 0 10px" } }, h("h2", null, "Scores"), h("span", { className: "muted", style: { fontSize: 13 } }, "Class + exam = total")),
+    subjects.map((s, i) => h("div", { className: "subj", key: i },
+      h("div", { className: "subj-top" },
+        h("input", { value: s.subject, onChange: e => setSub(i, "subject", e.target.value), placeholder: "Subject", "aria-label": "Subject" }),
+        h("button", { className: "subj-x", onClick: () => setSubjects(x => x.filter((_, j) => j !== i)), "aria-label": "Remove " + (s.subject || "subject") }, "\u00d7")),
+      h("div", { className: "subj-nums" },
+        h("div", null, h("span", { className: "label" }, "Class"), h("input", { value: s.class_score, onChange: e => setSub(i, "class_score", e.target.value), inputMode: "decimal", placeholder: "0" })),
+        h("div", null, h("span", { className: "label" }, "Exam"), h("input", { value: s.exam_score, onChange: e => setSub(i, "exam_score", e.target.value), inputMode: "decimal", placeholder: "0" })),
+        h("div", null, h("span", { className: "label" }, "Total"), h("div", { className: "ro tnum" }, s.marks || "—")),
+        h("div", null, h("span", { className: "label" }, "Grade"), h("div", { className: "ro" }, s.grade || "—"))),
+      h("div", { className: "rmk" }, h("input", { value: s.remarks, onChange: e => setSub(i, "remarks", e.target.value), placeholder: "Remark (fills in from the score)", "aria-label": "Remark" })))),
+    h("button", { className: "btn btn-sm", onClick: () => setSubjects(s => [...s, newSubjectRow("")]) }, "+ Add subject"),
+
+    h("details", { className: "more", open: metaFilled },
+      h("summary", null, "Report card details"),
+      h("div", { className: "meta-grid" },
+        metaField("interest", "Interest", "Reading"),
+        metaField("attitude", "Attitude", "Respectful"),
+        metaField("promotion_status", "Promotion status", "Promoted to Basic 5"),
+        metaField("next_term_fees", "Next term fees", "GHS 350"),
+        metaField("attendance", "Attendance (override)", "Counted from register"),
+        metaField("arrears", "Arrears (override)", "Counted from fees"),
+        metaField("position_in_class", "Position (override)", "Worked out from scores")),
+      h("label", { className: "field" }, h("span", { className: "label" }, "Class teacher's remarks"),
+        h("textarea", { value: meta.teacher_remarks, onChange: setM("teacher_remarks"), placeholder: "Overall remark for this term" })),
+      fields.map((f, i) => h("div", { key: i, className: "subj-top" },
+        h("input", { value: f.label, onChange: e => setFields(x => x.map((r, j) => j === i ? { ...r, label: e.target.value } : r)), placeholder: "Label" }),
+        h("input", { value: f.value, onChange: e => setFields(x => x.map((r, j) => j === i ? { ...r, value: e.target.value } : r)), placeholder: "Value" }),
+        h("button", { className: "subj-x", onClick: () => setFields(x => x.filter((_, j) => j !== i)), "aria-label": "Remove field" }, "\u00d7"))),
+      h("button", { className: "btn btn-sm", onClick: () => setFields(x => [...x, { label: "", value: "" }]) }, "+ Add a line")),
+    err ? h("div", { className: "err", style: { marginTop: 14 } }, err) : null);
+}
+
+/* ============================================================
+   Student sheet: one place for scores, attendance and fees
+   ============================================================ */
+function StudentSheet({ student, rec, ctx, role, canEdit, onEdit, onDelete, onClose }) {
+  const canSeeFees = isHead(role);
+  const map = attIn(student.attendance, ctx.range);
+  const t = tally(map);
+  const months = Array.from(new Set(Object.keys(map).map(d => d.slice(0, 7)))).sort().reverse();
+  const [mi, setMi] = useState(0);
+  const month = months[Math.min(mi, Math.max(0, months.length - 1))] || "";
+  const monthDays = Object.keys(map).filter(d => d.slice(0, 7) === month).sort();
+  const mt = tally(Object.fromEntries(monthDays.map(d => [d, map[d]])));
+  const monthLabel = month ? MONTHS[+month.slice(5, 7) - 1] + " " + month.slice(0, 4) : "";
+  const [pays, setPays] = useState([]);
+  useEffect(() => {
+    if (!canSeeFees) return;
+    let alive = true;
+    let q = sb.from("fee_payments").select("*").eq("student_id", student.id);
+    if (!ctx.term.virtual) q = q.eq("term_id", ctx.term.id);
+    q.order("created_at", { ascending: true }).then(res => { if (alive && !res.error) setPays(res.data || []); }, () => {});
+    return () => { alive = false; };
+  }, [student.id, ctx.term.id, canSeeFees]);
+  const bal = num(rec.fee_total) - num(rec.fee_paid);
+  const hasFee = num(rec.fee_total) || num(rec.fee_paid);
+  const pos = ctx.classRanks[student.id];
+  const subj = (rec.subjects || []).filter(r => r.subject);
+
+  return h(Sheet, {
+    title: student.name, sub: ctx.folder.class_name + ", " + termWithMonths(ctx.term, ctx.terms), onClose,
+    foot: [h("button", { key: "r", className: "btn", onClick: () => printReportCard(student, ctx) }, "Report card"),
+      canEdit ? h("button", { key: "e", className: "btn btn-primary", onClick: () => { onClose(); onEdit(student); } }, "Enter scores") : null]
+  },
+    h("div", { className: "stats" + (canSeeFees ? "" : " two") },
+      h("div", { className: "stat" }, h("div", { className: "l" }, "Position"), h("div", { className: "n" }, pos ? ordinal(pos) : "—")),
+      h("div", { className: "stat" }, h("div", { className: "l" }, "Attendance"), h("div", { className: "n tnum " + (!t.marked ? "" : t.rate >= 75 ? "good" : "bad") }, t.marked ? t.rate + "%" : "—")),
+      canSeeFees ? h("div", { className: "stat" }, h("div", { className: "l" }, "Balance"), h("div", { className: "n tnum " + (bal > 0 ? "bad" : hasFee ? "good" : "") }, hasFee ? ghs(bal) : "—")) : null),
+
+    h("div", { className: "block" },
+      h("div", { className: "block-h" }, h("h4", null, "Scores"), hasMarks(rec) ? h("span", { className: "muted tnum", style: { fontSize: 13 } }, "Total " + totalOf(rec)) : null),
+      hasMarks(rec) ? h("table", { className: "mini" },
+        h("thead", null, h("tr", null, h("th", null, "Subject"), h("th", { className: "r" }, "Total"), h("th", { className: "r" }, "Grade"), h("th", { className: "r" }, "Pos"))),
+        h("tbody", null, subj.map((r, i) => {
+          const sc = hasScore(r);
+          const p = ctx.ranks[student.id] && ctx.ranks[student.id][r.subject];
+          return h("tr", { key: i }, h("td", null, r.subject), h("td", { className: "r tnum" }, sc ? r.marks : "—"),
+            h("td", { className: "r" }, sc ? h("span", { className: "grade" }, gradeFor(num(r.class_score) + num(r.exam_score))) : "—"),
+            h("td", { className: "r" }, p ? ordinal(p) : "—"));
+        })))
+        : h("p", { className: "hint", style: { margin: 0 } }, "No scores entered for this term yet.")),
+
+    h("div", { className: "block" },
+      h("div", { className: "block-h" }, h("h4", null, "Attendance"),
+        months.length > 1 ? h("div", { className: "mo-nav" },
+          h("button", { onClick: () => setMi(Math.min(months.length - 1, mi + 1)), disabled: mi >= months.length - 1, "aria-label": "Earlier month" }, "\u2039"),
+          h("span", null, monthLabel),
+          h("button", { onClick: () => setMi(Math.max(0, mi - 1)), disabled: mi <= 0, "aria-label": "Later month" }, "\u203a"))
+          : months.length === 1 ? h("span", { className: "muted", style: { fontSize: 13 } }, monthLabel) : null),
+      monthDays.length ? h(Frag, null,
+        h("p", { className: "hint", style: { margin: "0 0 8px" } }, mt.present + " of " + mt.marked + " days present. Term: " + t.present + " of " + t.marked + "."),
+        h("div", { className: "days" }, monthDays.map(d => h("span", { key: d, className: "day " + (map[d] === "present" ? "p" : "a"), title: fmtDay(d) + ", " + map[d] }, +d.slice(8, 10)))))
+        : h("p", { className: "hint", style: { margin: 0 } }, "No attendance recorded this term yet.")),
+
+    canSeeFees ? h("div", { className: "block" },
+      h("div", { className: "block-h" }, h("h4", null, "Fees")),
+      h("div", { className: "kv" }, h("span", null, "Term fee"), h("span", { className: "tnum" }, ghs(rec.fee_total))),
+      h("div", { className: "kv" }, h("span", null, "Paid"), h("span", { className: "tnum" }, ghs(rec.fee_paid))),
+      h("div", { className: "kv" }, h("span", null, "Balance"), h("span", { className: "tnum " + (bal > 0 ? "bad" : "good") }, ghs(bal))),
+      pays.length ? h("div", { className: "chips" }, pays.map((p, i) => h("span", { key: i, className: "chip tnum" },
+        ghs(p.amount) + (p.created_at ? ", " + new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "")))) : null) : null,
+
+    canEdit ? h("div", { className: "block", style: { paddingBottom: 0 } },
+      h("button", { className: "link danger", onClick: () => { onClose(); onDelete(student); } }, "Delete student")) : null);
+}
+
+/* ============================================================
+   Attendance
+   ============================================================ */
+function AttendanceView({ students, ctx, readOnly, role, onReload, onOpenStudent }) {
+  const range = ctx.range;
+  const today = todayISO();
+  const canEditPast = isHead(role);
+  const lastDay = range.end < today ? range.end : today;
+  const defaultDay = inRange(today, range) ? today : lastDay;
+  const [view, setView] = useState("day");
+  const [day, setDay] = useState(defaultDay);
+  const [busy, setBusy] = useState({});
+  const [pending, setPending] = useState({});
+  const [sortLow, setSortLow] = useState(false);
+  useEffect(() => { setDay(defaultDay); }, [ctx.term.id]);
+  const activeDay = canEditPast ? day : defaultDay;
+  const isToday = activeDay === today;
+  // Teachers mark today only. Changing an earlier day is a headmaster job and
+  // is written to the edit log, so absences can't be quietly erased later.
+  const locked = readOnly || !inRange(activeDay, range) || activeDay > today || (!isToday && !canEditPast);
+  const statusOf = s => Object.prototype.hasOwnProperty.call(pending, s.id) ? pending[s.id] : (s.attendance || {})[activeDay];
+
+  const write = async (s, next, was) => {
+    setPending(p => ({ ...p, [s.id]: next }));
+    setBusy(b => ({ ...b, [s.id]: true }));
+    try {
+      await saveMark(s.id, activeDay, next);
+      if (!isToday) logEdit("attendance", next === null ? "cleared" : "changed", `${s.name} · ${activeDay} · ${was || "not marked"} → ${next || "not marked"}`);
+      return true;
+    } catch (e) {
+      setPending(p => { const n = { ...p }; delete n[s.id]; return n; });
+      alert("Could not save the mark for " + s.name + ": " + e.message);
+      return false;
+    } finally {
+      setBusy(b => { const n = { ...b }; delete n[s.id]; return n; });
+    }
+  };
+  const settle = async () => { await onReload(); setPending({}); };
+  const mark = async (s, status) => {
+    if (locked) return;
+    const was = statusOf(s);
+    await write(s, was === status ? null : status, was);
+    settle();
+  };
+  const markRest = async () => {
+    const rest = students.filter(s => !statusOf(s));
+    if (!rest.length) return;
+    await Promise.all(rest.map(s => write(s, "present", null)));
+    settle();
+  };
+
+  const present = students.filter(s => statusOf(s) === "present").length;
+  const absent = students.filter(s => statusOf(s) === "absent").length;
+  const unmarked = students.length - present - absent;
+  const pct = n => students.length ? (n / students.length * 100) + "%" : "0%";
+
+  if (!students.length) return h("div", { className: "empty", style: { marginTop: 16 } }, h("h3", null, "No students yet"), h("p", null, "Add students to take the register."));
+
+  const dayView = h(Frag, null,
+    h("div", { className: "day-head" },
+      h("div", null, h("div", { className: "d" }, fmtDay(activeDay)), h("div", { className: "muted", style: { fontSize: 13 } }, isToday ? "Today's register" : "Earlier day")),
+      canEditPast ? h("input", { type: "date", value: activeDay, min: range.start === "0000-01-01" ? undefined : range.start, max: lastDay, onChange: e => setDay(e.target.value || defaultDay), "aria-label": "Register date" }) : null),
+    h("div", { className: "meter", "aria-hidden": "true" }, h("i", { className: "p", style: { width: pct(present) } }), h("i", { className: "a", style: { width: pct(absent) } })),
+    h("div", { className: "meter-key tnum" },
+      h("span", null, h("b", null, present), " present"), h("span", null, h("b", null, absent), " absent"),
+      unmarked ? h("span", { className: "muted" }, unmarked + " not marked") : null),
+    !isToday && !locked ? h("div", { className: "notice", style: { marginTop: 12 } }, h("div", { className: "grow" }, "You're changing an earlier day. Each change is recorded for the owner.")) : null,
+    !locked && unmarked ? h("div", { className: "tools" },
+      h("span", null, "Tap again to clear a mark."),
+      h("button", { className: "btn btn-sm", onClick: markRest }, "Mark the rest present")) : h("div", { style: { height: 12 } }),
+    h("div", { className: "list" }, students.map(s => {
+      const st = statusOf(s);
+      const tt = tally(attIn(s.attendance, range));
+      return h("div", { key: s.id, className: "row static" },
+        h(Av, { s }),
+        h("div", { className: "row-main" }, h("div", { className: "row-title" }, s.name), h("div", { className: "row-sub tnum" }, tt.marked ? tt.present + " of " + tt.marked + " days this term" : "No days yet")),
+        locked
+          ? h("span", { className: "pill " + (st === "present" ? "ok" : st === "absent" ? "bad" : "") }, st ? (st === "present" ? "Present" : "Absent") : "Not marked")
+          : h("div", { className: "pa" },
+            h("button", { className: "p" + (st === "present" ? " on" : ""), onClick: () => mark(s, "present"), disabled: !!busy[s.id], "aria-label": "Present", "aria-pressed": st === "present" }, "P"),
+            h("button", { className: "a" + (st === "absent" ? " on" : ""), onClick: () => mark(s, "absent"), disabled: !!busy[s.id], "aria-label": "Absent", "aria-pressed": st === "absent" }, "A")));
+    })));
+
+  const rows = students.map(s => ({ s, t: tally(attIn(s.attendance, range)) }));
+  if (sortLow) rows.sort((a, b) => (a.t.marked ? a.t.rate : 101) - (b.t.marked ? b.t.rate : 101));
+  const studentView = h(Frag, null,
+    h("div", { className: "tools" }, h("span", null, "This term, tap for the full record"),
+      h("button", { className: "link", onClick: () => setSortLow(v => !v) }, sortLow ? "Sort by name" : "Lowest first")),
+    h("div", { className: "list" }, rows.map(({ s, t }) =>
+      h("button", { key: s.id, className: "row", onClick: () => onOpenStudent(s) },
+        h(Av, { s }),
+        h("div", { className: "row-main" }, h("div", { className: "row-title" }, s.name), h("div", { className: "row-sub tnum" }, t.marked ? t.present + " of " + t.marked + " days present" : "No record yet")),
+        h("span", { className: "pill tnum " + (!t.marked ? "" : t.rate >= 75 ? "ok" : "bad") }, t.marked ? t.rate + "%" : "—")))));
+
+  // Class register: every day taken this term, newest first, grouped by month.
+  const byDate = {};
+  students.forEach(s => Object.entries(attIn(s.attendance, range)).forEach(([d, v]) => {
+    const r = byDate[d] = byDate[d] || { p: 0, a: 0 };
+    if (v === "present") r.p++; else if (v === "absent") r.a++;
+  }));
+  const dates = Object.keys(byDate).sort().reverse();
+  const totP = dates.reduce((a, d) => a + byDate[d].p, 0), totM = dates.reduce((a, d) => a + byDate[d].p + byDate[d].a, 0);
+  const byMonth = [];
+  dates.forEach(d => { const m = d.slice(0, 7); if (!byMonth.length || byMonth[byMonth.length - 1].m !== m) byMonth.push({ m, ds: [] }); byMonth[byMonth.length - 1].ds.push(d); });
+  const registerView = h(Frag, null,
+    h("div", { className: "figs" },
+      h(Fig, { n: totM ? Math.round(totP / totM * 100) + "%" : "—", l: "Class attendance" }),
+      h(Fig, { n: dates.length, l: "Days taken" }),
+      h(Fig, { n: dates.length ? Math.round(totP / dates.length) : "—", l: "Present per day" })),
+    dates.length ? byMonth.map(g => h(Frag, { key: g.m },
+      h("div", { className: "month-h" }, MONTHS[+g.m.slice(5, 7) - 1] + " " + g.m.slice(0, 4)),
+      h("div", { className: "list" }, g.ds.map(d => {
+        const r = byDate[d], tot = r.p + r.a, p = tot ? Math.round(r.p / tot * 100) : 0;
+        return h("div", { key: d, className: "row static flat" },
+          h("div", { className: "row-main" }, h("div", { className: "row-title" }, fmtDay(d)), h("div", { className: "row-sub tnum" }, r.p + " present, " + r.a + " absent")),
+          h("span", { className: "pill tnum " + (p >= 75 ? "ok" : "bad") }, p + "%"));
+      }))))
+      : h("p", { className: "hint", style: { margin: "14px 4px" } }, "No register taken this term yet."));
+
+  return h("div", null,
+    h("div", { className: "seg-wrap" }, h(Seg, { value: view, onChange: setView, options: [{ id: "day", label: isToday ? "Today" : "Day" }, { id: "student", label: "Students" }, { id: "register", label: "History" }] })),
+    view === "day" ? dayView : view === "student" ? studentView : registerView);
+}
+
+/* ============================================================
+   Fees (headmaster and owner)
+   ============================================================ */
+function FeePaySheet({ student, rec, ctx, role, onClose, onSaved }) {
+  const [total, setTotal] = useState(rec.fee_total != null ? String(rec.fee_total) : "");
+  const [amount, setAmount] = useState("");
+  const [pays, setPays] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const loadPays = useCallback(() => {
+    let q = sb.from("fee_payments").select("*").eq("student_id", student.id);
+    if (!ctx.term.virtual) q = q.eq("term_id", ctx.term.id);
+    q.order("created_at", { ascending: true }).then(res => { if (!res.error) setPays(res.data || []); }, () => {});
+  }, [student.id, ctx.term.id]);
+  useEffect(() => { loadPays(); }, [loadPays]);
+  const bal = num(rec.fee_total) - num(rec.fee_paid);
+  const amt = num(amount);
+
+  const save = async () => {
+    if (!total.trim() && !amt) return setErr("Enter the term fee or a payment amount.");
+    setBusy(true); setErr("");
+    try {
+      await saveRec(student.id, ctx.term, cur => ({ fee_total: total.trim() ? num(total) : (cur.fee_total ?? null), fee_paid: num(cur.fee_paid) + amt }));
+      if (amt) {
+        const row = { student_id: student.id, student_name: student.name || "", class_id: ctx.folder.id, class_name: ctx.folder.class_name, branch: ctx.folder.branch || null, amount: amt, recorded_role: role };
+        if (!ctx.term.virtual) row.term_id = ctx.term.id;
+        const { error } = await sb.from("fee_payments").insert(row);
+        if (error) throw error;
+      }
+      onSaved(); onClose();
+    } catch (e) { setErr("Could not save: " + e.message); setBusy(false); }
+  };
+  const removePayment = async p => {
+    if (!confirm(`Delete the payment of ${ghs(p.amount)}? The amount paid goes down by the same.`)) return;
+    setBusy(true);
+    try {
+      await sb.from("fee_payments").delete().eq("id", p.id);
+      await saveRec(student.id, ctx.term, cur => ({ fee_paid: Math.max(0, num(cur.fee_paid) - num(p.amount)) }));
+      loadPays(); onSaved();
+    } catch (e) { setErr("Could not delete: " + e.message); }
+    setBusy(false);
+  };
+  const clearRecord = async () => {
+    if (!confirm(`Clear ${student.name}'s fee record for ${termName(ctx.term)}?\n\nThis removes the term fee, the amount paid and every payment this term.`)) return;
+    setBusy(true);
+    try {
+      await saveRec(student.id, ctx.term, () => ({ fee_total: null, fee_paid: null }));
+      let q = sb.from("fee_payments").delete().eq("student_id", student.id);
+      if (!ctx.term.virtual) q = q.eq("term_id", ctx.term.id);
+      await q;
+      onSaved(); onClose();
+    } catch (e) { setErr("Could not clear: " + e.message); setBusy(false); }
+  };
+
+  return h(Sheet, {
+    title: student.name, sub: "Fees, " + termWithMonths(ctx.term, ctx.terms), onClose,
+    foot: [h("button", { key: "c", className: "btn", onClick: onClose }, "Cancel"),
+      h("button", { key: "s", className: "btn btn-primary", onClick: save, disabled: busy }, busy ? "Saving…" : amt ? "Log " + ghs(amt) : "Save term fee")]
+  },
+    h("div", { className: "balance" },
+      h("div", { className: "l" }, "Balance this term"),
+      h("div", { className: "n tnum", style: { color: bal > 0 ? "var(--danger)" : "var(--ok)" } }, ghs(bal)),
+      h("div", { className: "s tnum" }, ghs(rec.fee_paid) + " paid of " + ghs(rec.fee_total))),
+    h("div", { className: "row-2" },
+      h("label", { className: "field" }, h("span", { className: "label" }, "Payment now (GHS)"), h("input", { value: amount, onChange: e => setAmount(e.target.value), inputMode: "decimal", placeholder: "0", autoFocus: true })),
+      h("label", { className: "field" }, h("span", { className: "label" }, "Term fee (GHS)"), h("input", { value: total, onChange: e => setTotal(e.target.value), inputMode: "decimal", placeholder: "0" }))),
+    pays.length ? h(Frag, null,
+      h("span", { className: "label" }, "Payments this term"),
+      h("div", { className: "chips", style: { marginTop: 0 } }, pays.map((p, i) => h("span", { key: p.id || i, className: "chip tnum" },
+        ghs(p.amount) + (p.created_at ? ", " + new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : ""),
+        p.id ? h("button", { onClick: () => removePayment(p), disabled: busy, "aria-label": "Delete payment" }, "\u00d7") : null)))) : null,
+    err ? h("div", { className: "err", style: { marginTop: 12 } }, err) : null,
+    hasFeeRec(rec) ? h("button", { className: "link danger", style: { marginTop: 22 }, onClick: clearRecord, disabled: busy }, "Clear this term's fee record") : null);
+}
+const hasFeeRec = rec => num(rec.fee_total) > 0 || num(rec.fee_paid) > 0;
+
+function FeesView({ rows, ctx, role, onReload, onOpenStudent }) {
+  const [paying, setPaying] = useState(null);
+  const canEdit = isHead(role);
+  const totFee = rows.reduce((a, r) => a + num(r.rec.fee_total), 0);
+  const totPaid = rows.reduce((a, r) => a + num(r.rec.fee_paid), 0);
+  const owing = rows.filter(r => num(r.rec.fee_total) - num(r.rec.fee_paid) > 0).length;
+  const payingRow = paying ? rows.find(r => r.s.id === paying) : null;
+  if (!rows.length) return h("div", { className: "empty", style: { marginTop: 16 } }, h("h3", null, "No students yet"), h("p", null, "Add students to record fees."));
+  return h("div", null,
+    h("div", { className: "figs two money" },
+      h(Fig, { n: ghs(totPaid), l: "Collected this term" }),
+      h(Fig, { n: ghs(Math.max(0, totFee - totPaid)), l: owing + (owing === 1 ? " student owes" : " students owe"), tone: totFee - totPaid > 0 ? "bad" : "" })),
+    h("div", { className: "tools" }, h("span", null, canEdit ? "Tap a student to log a payment" : "Recorded by the headmaster")),
+    h("div", { className: "list" }, rows.map(({ s, rec }) => {
+      const bal = num(rec.fee_total) - num(rec.fee_paid);
+      const has = hasFeeRec(rec);
+      return h("button", { key: s.id, className: "row", onClick: () => canEdit ? setPaying(s.id) : onOpenStudent(s) },
+        h(Av, { s }),
+        h("div", { className: "row-main" }, h("div", { className: "row-title" }, s.name),
+          h("div", { className: "row-sub tnum" }, has ? ghs(rec.fee_paid) + " of " + ghs(rec.fee_total) + " paid" : "No fee set")),
+        has ? (bal > 0 ? h("span", { className: "tnum", style: { color: "var(--danger)", fontWeight: 700, fontSize: 14 } }, ghs(bal)) : h("span", { className: "pill ok" }, "Paid")) : h("span", { className: "pill" }, "Set fee"));
+    })),
+    payingRow ? h(FeePaySheet, { student: payingRow.s, rec: payingRow.rec, ctx, role, onClose: () => setPaying(null), onSaved: onReload }) : null);
+}
+
+/* ============================================================
+   Class: Students / Attendance / Fees for the chosen term
+   ============================================================ */
+function ClassView({ role, folder, students, term, terms, school, showBack, onBack, onReload, onAddStudent, onEditStudent, onDeleteStudent, onEditClass, onDeleteClass }) {
+  const canEditStudents = role === "teacher" || isHead(role);
+  const canSeeFees = isHead(role);
+  const [tab, setTab] = useState("students");
+  const [sheetId, setSheetId] = useState(null);
+  const [actions, setActions] = useState(false);
+  const [q, setQ] = useState("");
+  useEffect(() => { if (tab === "fees" && !canSeeFees) setTab("students"); }, [tab, canSeeFees]);
+
+  const rows = useMemo(() => students.map(s => ({ s, rec: getRec(s, term) })), [students, term]);
+  const rankRows = rows.map(r => ({ id: r.s.id, subjects: r.rec.subjects }));
+  const ctx = {
+    folder, term, terms, school,
+    range: termRange(term, terms),
+    ranks: computeSubjectRanks(rankRows),
+    classRanks: computeClassRanks(rankRows),
+    numberOnRoll: students.length
+  };
+  const submitted = classStatus(folder, term) === "submitted";
+  const sheetRow = sheetId ? rows.find(r => r.s.id === sheetId) : null;
+  const shown = q.trim() ? rows.filter(r => normName(r.s.name).includes(normName(q))) : rows;
+  const scoredCount = rows.filter(r => hasMarks(r.rec)).length;
+  const setStatus = async st => { await setClassStatus(folder.id, term, st); onReload(); };
+
+  return h("div", null,
+    showBack ? h("button", { className: "back", onClick: onBack }, Icon.left(), "Classes") : h("div", { style: { height: 8 } }),
+    h("div", { className: "class-head" },
+      h("div", { className: "grow" },
+        h("h1", { className: "h1" }, folder.class_name, h("span", { className: "pill " + (submitted ? "ok" : "warn") }, submitted ? "Submitted" : "In progress")),
+        h("p", { className: "lede" }, [teacherNames(folder) || "No teacher assigned", students.length + (students.length === 1 ? " student" : " students")].join(", "))),
+      h("button", { className: "icon-btn", onClick: () => setActions(true), "aria-label": "Class options" }, Icon.more())),
+    h("div", { className: "seg-wrap" }, h(Seg, {
+      value: tab, onChange: setTab,
+      options: [{ id: "students", label: "Students" }, { id: "attendance", label: "Attendance" }].concat(canSeeFees ? [{ id: "fees", label: "Fees" }] : [])
+    })),
+
+    tab === "students" ? (students.length === 0
+      ? h("div", { className: "empty", style: { marginTop: 16 } }, h("h3", null, "No students in this class yet"),
+        h("p", null, canEditStudents ? "Add the class list first. Scores can come later." : "The teacher hasn't added students yet."),
+        canEditStudents ? h("button", { className: "btn btn-primary", onClick: onAddStudent }, "Add students") : null)
+      : h(Frag, null,
+        h("div", { className: "tools" }, h("span", { className: "tnum" }, scoredCount + " of " + students.length + " have scores, " + (termMonths(ctx.range) || "this term"))),
+        students.length > 8 ? h("div", { className: "search" }, Icon.search(), h("input", { value: q, onChange: e => setQ(e.target.value), placeholder: "Find a student", "aria-label": "Find a student" })) : null,
+        h("div", { className: "list" }, shown.map(({ s, rec }) => {
+          const pos = ctx.classRanks[s.id];
+          const t = tally(attIn(s.attendance, ctx.range));
+          return h("button", { key: s.id, className: "row", onClick: () => setSheetId(s.id) },
+            h(Av, { s }),
+            h("div", { className: "row-main" }, h("div", { className: "row-title" }, s.name),
+              h("div", { className: "row-sub tnum" }, hasMarks(rec) ? "Total " + totalOf(rec) + (pos ? ", " + ordinal(pos) + " in class" : "") : "No scores yet")),
+            h("div", { className: "row-end" },
+              t.marked ? h("span", { className: "tnum", style: { color: t.rate >= 75 ? "var(--ink-2)" : "var(--danger)", fontSize: 13, fontWeight: 600 } }, t.rate + "%") : null,
+              h(Chev)));
+        })),
+        shown.length === 0 ? h("p", { className: "hint", style: { margin: "12px 4px" } }, "No student matches that name.") : null)) : null,
+
+    tab === "attendance" ? h(AttendanceView, { students, ctx, readOnly: !canEditStudents, role, onReload, onOpenStudent: s => setSheetId(s.id) }) : null,
+    tab === "fees" && canSeeFees ? h(FeesView, { rows, ctx, role, onReload, onOpenStudent: s => setSheetId(s.id) }) : null,
+
+    sheetRow ? h(StudentSheet, { student: sheetRow.s, rec: sheetRow.rec, ctx, role, canEdit: canEditStudents, onEdit: onEditStudent, onDelete: onDeleteStudent, onClose: () => setSheetId(null) }) : null,
+    actions ? h(ActionSheet, {
+      title: folder.class_name, sub: termWithMonths(term, terms), onClose: () => setActions(false),
+      items: [
+        students.length ? { label: "Print all report cards", sub: "One page per student, ready to print", onClick: () => printAllReportCards(students, ctx) } : null,
+        canEditStudents && students.length ? (submitted
+          ? { label: "Reopen for editing", sub: "Marks the class as in progress again", onClick: () => setStatus("in_progress") }
+          : { label: "Mark this term submitted", sub: "Tells the headmaster the scores are final", onClick: () => setStatus("submitted") }) : null,
+        canEditStudents ? { label: "Edit class details", onClick: () => onEditClass(folder) } : null,
+        isHead(role) ? { label: "Delete class", danger: true, onClick: () => onDeleteClass(folder) } : null
+      ]
+    }) : null);
+}
+
+/* ============================================================
+   Home: today's picture, then one flat list of classes
+   ============================================================ */
+function Home({ role, userName, folders, students, counts, term, terms, branch, setBranch, allAccounts, edits, onClearEdits, onOpen, onNewClass, onSchoolSettings, schoolConfigured, onManageStaff }) {
+  const [showEdits, setShowEdits] = useState(false);
+  const isOwner = role === "owner";
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const today = todayISO();
+  const range = termRange(term, terms);
+  const ids = new Set(folders.map(f => f.id));
+  const mine = students.filter(s => ids.has(s.class_id));
+  const inTerm = inRange(today, range);
+  let attFig;
+  if (inTerm) {
+    const marked = mine.filter(s => (s.attendance || {})[today]);
+    const p = marked.filter(s => s.attendance[today] === "present").length;
+    attFig = h(Fig, { n: marked.length ? Math.round(p / marked.length * 100) + "%" : "—", l: marked.length ? "Present today" : "Register not taken" });
+  } else {
+    const t = mine.reduce((acc, s) => { const x = tally(attIn(s.attendance, range)); acc.p += x.present; acc.m += x.marked; return acc; }, { p: 0, m: 0 });
+    attFig = h(Fig, { n: t.m ? Math.round(t.p / t.m * 100) + "%" : "—", l: "Term attendance" });
+  }
+  const submitted = folders.filter(f => classStatus(f, term) === "submitted").length;
+  const missingHeads = BRANCHES.filter(b => !allAccounts.some(a => a.role === "headmaster" && a.branch === b.id));
+  const visibleMissing = isOwner ? missingHeads.filter(b => !branch || b.id === branch) : [];
+
+  const classRow = f => {
+    const done = classStatus(f, term) === "submitted";
+    return h("button", { key: f.id, className: "row", onClick: () => onOpen(f) },
+      h("div", { className: "tile" }, classCode(f.class_name)),
+      h("div", { className: "row-main" }, h("div", { className: "row-title" }, f.class_name), h("div", { className: "row-sub" }, teacherNames(f) || "No teacher assigned")),
+      h("div", { className: "row-end" },
+        h("span", { className: "tnum" }, counts[f.id] || 0),
+        h("span", { className: "sdot" + (done ? " ok" : ""), title: done ? "Submitted" : "In progress" }),
+        h(Chev)));
+  };
+  const groups = isOwner && !branch
+    ? BRANCHES.map(b => ({ label: b.label, items: folders.filter(f => f.branch === b.id) }))
+      .concat([{ label: "No location", items: folders.filter(f => !BRANCHES.some(b => b.id === f.branch)) }])
+      .filter(g => g.items.length)
+    : [{ label: null, items: folders }];
+  const canCreate = isHead(role);
+
+  return h("div", null,
+    h("div", { className: "greet" }, greeting + (userName ? ", " + userName : "")),
+    h("h1", { className: "h1" }, new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })),
+    isOwner ? h("div", { className: "seg-wrap" }, h(Seg, { value: branch, onChange: setBranch, options: [{ id: "", label: "All" }].concat(BRANCHES.map(b => ({ id: b.id, label: b.label.replace(/\s*\(.*\)/, "") }))) })) : null,
+    h("div", { className: "figs" }, h(Fig, { n: mine.length, l: mine.length === 1 ? "Student" : "Students" }), attFig, h(Fig, { n: h(Frag, null, submitted, h("small", null, "/" + folders.length)), l: "Classes submitted" })),
+
+    role === "headmaster" && !schoolConfigured ? h("div", { className: "notice info" },
+      h("div", { className: "grow" }, "Add your school's name and address so they print on report cards."),
+      h("button", { className: "btn btn-sm btn-primary", onClick: onSchoolSettings }, "Set up")) : null,
+    visibleMissing.length ? h("div", { className: "notice" },
+      h("div", { className: "grow" }, h("strong", null, visibleMissing.map(b => b.label.replace(/\s*\(.*\)/, "")).join(" and ")), " has no headmaster yet."),
+      h("button", { className: "btn btn-sm", onClick: onManageStaff }, "Assign")) : null,
+    isOwner && edits.length ? h("div", { className: "notice" },
+      h("div", { className: "grow" },
+        h("strong", null, edits.length + (edits.length === 1 ? " change" : " changes") + " to review. "),
+        "Renamed records and corrected attendance.",
+        showEdits ? h("ul", null, edits.slice(0, 8).map((e, i) => h("li", { key: i }, e.detail))) : null),
+      h("div", { style: { display: "flex", flexDirection: "column", gap: 6 } },
+        h("button", { className: "btn btn-sm", onClick: () => setShowEdits(v => !v) }, showEdits ? "Hide" : "Review"),
+        showEdits ? h("button", { className: "btn btn-sm btn-ghost", onClick: onClearEdits }, "Clear") : null)) : null,
+
+    folders.length === 0
+      ? h("div", { className: "empty", style: { marginTop: 22 } }, h("h3", null, "No classes yet"),
+        h("p", null, canCreate ? "Create a class, then add its students." : "Your headmaster hasn't assigned you a class yet."),
+        canCreate ? h("button", { className: "btn btn-primary", onClick: onNewClass }, "Create a class") : null)
+      : groups.map((g, gi) => h(Frag, { key: gi },
+        h("div", { className: "sec" },
+          h("h2", null, g.label || "Classes", h("span", { className: "count" }, g.items.length)),
+          gi === 0 && canCreate ? h("button", { className: "link", onClick: onNewClass }, "+ New class") : null),
+        h("div", { className: "list" }, g.items.map(classRow)))));
+}
+
+/* ============================================================
+   App shell
+   ============================================================ */
+const LAUNCH_KEY = "da_launch_notice_v1";
+function App() {
+  const saved = store.get(SESSION_KEY) || {};
+  const [role, setRole] = useState(saved.role || null);
+  const [account, setAccount] = useState(saved.account || null);
+  const [isMaster, setIsMaster] = useState(!!saved.isMaster);
+  const [folders, setFolders] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [edits, setEdits] = useState([]);
+  const [settings, setSettings] = useState(null);
+  const [allAccounts, setAllAccounts] = useState([]);
+  const [terms, setTerms] = useState([LEGACY_TERM]);
+  const [termsTable, setTermsTable] = useState(false);
+  const [activeTermId, setActiveTermId] = useState(store.get(TERM_KEY));
+  const [booted, setBooted] = useState(false);
+  const [openId, setOpenId] = useState(null);
+  const [branch, setBranch] = useState("");
+  const [classModal, setClassModal] = useState(null);
+  const [studentModal, setStudentModal] = useState(null);
+  const [schoolModal, setSchoolModal] = useState(false);
+  const [staffModal, setStaffModal] = useState(false);
+  const [termSheet, setTermSheet] = useState(false);
+  const [menu, setMenu] = useState(false);
+  // Launch notice: shown once per phone until the person taps Got it.
+  const [launchSeen, setLaunchSeen] = useState(!!store.get(LAUNCH_KEY));
+  const dismissLaunch = () => { store.set(LAUNCH_KEY, true); setLaunchSeen(true); };
+
+  const term = terms.find(t => t.id === activeTermId) || terms.find(t => t.is_current) || sortTerms(terms).slice(-1)[0] || LEGACY_TERM;
+  const pickTerm = id => { setActiveTermId(id); store.set(TERM_KEY, id); window.scrollTo({ top: 0 }); };
+  const goCurrent = () => { const c = terms.find(t => t.is_current); if (c) pickTerm(c.id); };
+
+  const signOut = () => {
+    store.del(SESSION_KEY);
+    setMenu(false); setRole(null); setAccount(null); setIsMaster(false);
+    setFolders([]); setStudents([]); setEdits([]); setSettings(null); setAllAccounts([]);
+    setOpenId(null); setBranch(""); setBooted(false);
+  };
+
+  const load = useCallback(async () => {
+    if (!sb) return;
+    const [fRes, sRes, tRes] = await Promise.all([
+      sb.from("classes").select("*").order("class_name"),
+      sb.from("students").select("*").order("name"),
+      sb.from("academic_terms").select("*").order("starts_on")
+    ]);
+    if (!tRes.error) { setTermsTable(true); setTerms(tRes.data && tRes.data.length ? tRes.data : [LEGACY_TERM]); }
+    else { setTermsTable(false); setTerms([LEGACY_TERM]); }
+    if (!fRes.error) {
+      let f = fRes.data || [];
+      // Teachers and headmasters see their own location; accounts without a
+      // location (older ones) see everything so nobody is locked out.
+      if (!isMaster && account && account.branch && (role === "teacher" || role === "headmaster")) f = f.filter(x => (x.branch || null) === account.branch);
+      if ((role === "owner" || isMaster) && branch) f = f.filter(x => (x.branch || null) === branch);
+      if (role === "teacher" && account && !isMaster) {
+        const full = normName(account.first_name + " " + account.last_name);
+        f = f.filter(x => normName(x.teacher_name) === full || normName(x.teacher_name_2) === full || (account.class_id && x.id === account.class_id));
+      }
+      setFolders(f);
+    }
+    if (!sRes.error) setStudents(sRes.data || []);
+    try { const g = await sb.from("school_settings").select("*").eq("id", 1).maybeSingle(); if (!g.error) setSettings(g.data || null); } catch (e) {}
+    if (role === "owner" || isMaster) {
+      try { const e = await sb.from("edit_log").select("*").order("created_at", { ascending: false }).limit(20); if (!e.error) setEdits(e.data || []); } catch (e) {}
+      try { const a = await sb.from("accounts").select("id,role,first_name,last_name,phone,branch").in("role", ["teacher", "headmaster"]); if (!a.error) setAllAccounts(a.data || []); } catch (e) {}
+    }
+    setBooted(true);
+  }, [role, account, isMaster, branch]);
+  useEffect(() => { if (role) load(); }, [role, load]);
+
+  // Live updates: marks, payments and term changes show up on every open
+  // phone within a second. A gentle poll covers the case where Realtime
+  // isn't switched on for these tables.
+  useEffect(() => {
+    if (!sb || !role) return;
+    let t = null;
+    const bump = () => { clearTimeout(t); t = setTimeout(load, 400); };
+    let ch = null;
+    try {
+      ch = sb.channel("live-records");
+      ["students", "fee_payments", "classes", "academic_terms"].forEach(tb => ch.on("postgres_changes", { event: "*", schema: "public", table: tb }, bump));
+      ch.subscribe();
+    } catch (e) {}
+    const poll = setInterval(() => { if (!document.hidden) load(); }, 25000);
+    return () => { clearTimeout(t); clearInterval(poll); if (ch) { try { sb.removeChannel(ch); } catch (e) {} } };
+  }, [role, load]);
+
+  // A teacher with exactly one class goes straight into it.
+  const singleClass = role === "teacher" && !isMaster && folders.length === 1;
+  useEffect(() => { if (singleClass && !openId) setOpenId(folders[0].id); }, [singleClass, folders, openId]);
+
+  const counts = {};
+  students.forEach(s => { counts[s.class_id] = (counts[s.class_id] || 0) + 1; });
+  const openFolder = openId ? folders.find(f => f.id === openId) : null;
+  const classStudents = openFolder ? students.filter(s => s.class_id === openFolder.id) : [];
+  const school = resolveSchool(settings);
+  const canEditStudents = role === "teacher" || isHead(role);
+
+  const removeStudent = async s => {
+    if (!confirm(`Delete ${s.name}?\n\nThis removes the student and all their records, in every term. It cannot be undone.`)) return;
+    await sb.from("students").delete().eq("id", s.id);
+    load();
+  };
+  const removeClass = async f => {
+    if (!confirm(`Delete ${f.class_name} and all its students?\n\nEvery term's records for this class will be removed. It cannot be undone.`)) return;
+    await sb.from("students").delete().eq("class_id", f.id);
+    await sb.from("classes").delete().eq("id", f.id);
+    setOpenId(null);
+    load();
+  };
+  const clearEdits = async () => { try { await sb.from("edit_log").delete().neq("id", 0); } catch (e) {} setEdits([]); };
+  const switchRole = r => { setOpenId(null); setRole(r); store.set(SESSION_KEY, { role: r, account, isMaster }); };
+
+  if (!isConfigured) return h("div", { className: "config-warn" }, h("strong", null, "Almost ready. "), "Fill in the CONFIG values at the top of the file.");
+  if (!role) return h(Login, {
+    onLogin: ({ role: r, account: a, isMaster: m }) => {
+      setAccount(a || null); setIsMaster(!!m); setRole(r);
+      store.set(SESSION_KEY, { role: r, account: a || null, isMaster: !!m });
+      scheduleViewportSettle();
+    }
+  });
+
+  const firstName = account && account.first_name ? account.first_name : "";
+  const pastTerm = !term.virtual && !term.is_current && terms.some(t => t.is_current);
+  const plus = openFolder ? (canEditStudents ? () => setStudentModal("new") : null) : (isHead(role) ? () => setClassModal("new") : null);
+
+  return h("div", null,
+    h("header", { className: "topbar" }, h("div", { className: "wrap" },
+      h("div", { className: "brand" }, h(Logo), h("span", { className: "brand-name" }, school.name.replace(/\b\w+/g, w => w[0] + w.slice(1).toLowerCase()))),
+      h("button", { className: "term-chip" + (pastTerm ? " past" : ""), onClick: () => setTermSheet(true), "aria-label": "Change term, now " + termName(term) },
+        h("span", { className: "dot" }), shortTerm(term), Icon.down()),
+      h("button", { className: "avatar-btn", onClick: () => setMenu(true), "aria-label": "Account menu" }, firstName ? firstName[0].toUpperCase() : isMaster ? "M" : "D"))),
+
+    h("main", { className: "wrap page" },
+      booted && !launchSeen ? h("div", { className: "notice ok", role: "status", style: { marginTop: 4, marginBottom: 4 } },
+        h("div", { className: "grow" }, h("strong", null, "Last year's term records have been saved. "), "You can now use the app every day to mark attendance and enter scores."),
+        h("button", { className: "btn btn-sm", onClick: dismissLaunch }, "Got it")) : null,
+      pastTerm ? h("div", { className: "notice info", style: { marginTop: 4, marginBottom: 4 } },
+        h("div", { className: "grow" }, "You're looking at ", h("strong", null, termName(term)), ", records from ", termMonths(termRange(term, terms), true), "."),
+        h("button", { className: "btn btn-sm", onClick: goCurrent }, "Current term")) : null,
+      !booted ? h("div", { className: "loading" }, "Loading…")
+        : openFolder ? h(ClassView, {
+          role, folder: openFolder, students: classStudents, term, terms, school,
+          showBack: !singleClass, onBack: () => setOpenId(null), onReload: load,
+          onAddStudent: () => setStudentModal("new"), onEditStudent: s => setStudentModal(s), onDeleteStudent: removeStudent,
+          onEditClass: f => setClassModal(f), onDeleteClass: removeClass
+        })
+        : h(Home, {
+          role, userName: firstName, folders, students, counts, term, terms,
+          branch, setBranch: b => { setOpenId(null); setBranch(b); }, allAccounts, edits, onClearEdits: clearEdits,
+          onOpen: f => { setOpenId(f.id); window.scrollTo({ top: 0 }); }, onNewClass: () => setClassModal("new"),
+          onSchoolSettings: () => setSchoolModal(true), schoolConfigured: !!(settings && settings.name), onManageStaff: () => setStaffModal(true)
+        })),
+
+    h("nav", { className: "bottom-nav", "aria-label": "Main" }, h("div", { className: "inner" },
+      h("button", { className: "nav-item" + (!openFolder ? " on" : ""), onClick: () => { if (!singleClass) setOpenId(null); window.scrollTo({ top: 0 }); } }, Icon.home(), h("span", null, singleClass ? "My class" : "Home")),
+      plus ? h("button", { className: "nav-add", onClick: plus, "aria-label": openFolder ? "Add student" : "New class" }, Icon.plus(26)) : h("span", { className: "nav-spacer" }),
+      h("button", { className: "nav-item" + (menu ? " on" : ""), onClick: () => setMenu(true) }, Icon.menu(), h("span", null, "Menu")))),
+
+    classModal ? h(ClassModal, {
+      folder: classModal === "new" ? null : classModal, role,
+      accountBranch: (account && account.branch) || branch || null,
+      lockedBranch: role === "owner" && branch ? branch : null,
+      onClose: () => setClassModal(null), onSaved: () => { setClassModal(null); load(); }
+    }) : null,
+    studentModal && openFolder ? h(StudentModal, {
+      key: (studentModal === "new" ? "new" : studentModal.id) + term.id,
+      student: studentModal === "new" ? null : studentModal, classId: openFolder.id, term, terms,
+      submitted: classStatus(openFolder, term) === "submitted",
+      onClose: () => setStudentModal(null), onSaved: load
+    }) : null,
+    schoolModal ? h(SchoolSettingsModal, { settings, onClose: () => setSchoolModal(false), onSaved: () => { setSchoolModal(false); load(); } }) : null,
+    staffModal ? h(ManageStaffModal, { onClose: () => setStaffModal(false), onChanged: load }) : null,
+    termSheet ? h(TermsSheet, { terms, activeTerm: term, canManage: isHead(role), tableReady: termsTable, students, folders, onPick: pickTerm, onClose: () => setTermSheet(false), onChanged: load }) : null,
+
+    menu ? h(Sheet, { title: firstName ? firstName + (account.last_name ? " " + account.last_name : "") : isMaster ? "Master account" : "Signed in", sub: isMaster ? "Developer access" : ROLE_LABELS[role], onClose: () => setMenu(false) },
+      isMaster ? h("label", { className: "field" }, h("span", { className: "label" }, "Viewing as"),
+        h("select", { value: role, onChange: e => switchRole(e.target.value) },
+          h("option", { value: "teacher" }, "Teacher"), h("option", { value: "headmaster" }, "Headmaster"), h("option", { value: "owner" }, "Owner"))) : null,
+      isMaster && role !== "owner" ? h("label", { className: "field" }, h("span", { className: "label" }, "Location"),
+        h("select", { value: branch, onChange: e => { setOpenId(null); setBranch(e.target.value); } },
+          h("option", { value: "" }, "All locations"), BRANCHES.map(b => h("option", { key: b.id, value: b.id }, b.label)))) : null,
+      h("div", { className: "list" },
+        h("button", { className: "row flat", onClick: () => { setMenu(false); setTermSheet(true); } },
+          h("div", { className: "row-main" }, h("div", { className: "row-title" }, "Terms and academic years"), h("div", { className: "row-sub" }, termWithMonths(term, terms))), h(Chev)),
+        role === "owner" || isMaster ? h("button", { className: "row flat", onClick: () => { setMenu(false); setStaffModal(true); } },
+          h("div", { className: "row-main" }, h("div", { className: "row-title" }, "Staff"), h("div", { className: "row-sub" }, "Headmasters and teacher sign-ins")), h(Chev)) : null,
+        isHead(role) ? h("button", { className: "row flat", onClick: () => { setMenu(false); setSchoolModal(true); } },
+          h("div", { className: "row-main" }, h("div", { className: "row-title" }, "School information"), h("div", { className: "row-sub" }, "Printed on report cards")), h(Chev)) : null),
+      h("div", { className: "list", style: { marginTop: 14 } },
+        h("button", { className: "row flat danger", onClick: signOut }, h("div", { className: "row-main" }, h("div", { className: "row-title" }, "Sign out"))))) : null);
+}
+
+/* ---------- Viewport settle (iOS first-paint and zoom-after-login fix) ---------- */
+function settleViewport() {
+  try {
+    const ae = document.activeElement;
+    if (ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)) ae.blur();
+    void document.documentElement.offsetHeight;
+    window.dispatchEvent(new Event("resize"));
+  } catch (e) {}
+}
+function scheduleViewportSettle() {
+  [0, 60, 200, 500].forEach(t => setTimeout(settleViewport, t));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(settleViewport).catch(() => {});
+}
+window.addEventListener("pageshow", scheduleViewportSettle);
+window.addEventListener("orientationchange", () => setTimeout(settleViewport, 250));
+
+/* ---------- Boot ---------- */
+function mount() {
+  try {
+    if (isConfigured && window.supabase && !sb) sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    ReactDOM.createRoot(document.getElementById("root")).render(h(App));
+    scheduleViewportSettle();
+  } catch (e) {
+    document.getElementById("root").innerHTML = '<div class="config-warn"><strong>Startup error.</strong><br>' + esc(e && e.message ? e.message : String(e)) + '</div>';
+  }
+}
+if (isConfigured && !window.__DA_TEST__) {
+  const s = document.createElement("script");
+  s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js";
+  s.onload = mount;
+  s.onerror = () => { document.getElementById("root").innerHTML = '<div class="config-warn">Could not load the database library. Check your internet connection and refresh.</div>'; };
+  document.head.appendChild(s);
+} else {
+  mount();
+}
+</script>
+</body>
+</html>
